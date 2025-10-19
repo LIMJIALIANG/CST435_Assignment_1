@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package mapreduce;
+
+// MapReduce service definition
+service MapReduceService {
+    // Map phase: process text chunk and return word counts
+    rpc Map(MapRequest) returns (MapResponse);
+    
+    // Reduce phase: aggregate word counts
+    rpc Reduce(ReduceRequest) returns (ReduceResponse);
+    
+    // Health check
+    rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// Map request containing text chunk
+message MapRequest {
+    string text_chunk = 1;
+    int32 chunk_id = 2;
+}
+
+// Map response with word counts
+message MapResponse {
+    map<string, int32> word_counts = 1;
+    int32 chunk_id = 2;
+    double processing_time = 3;
+}
+
+// Reduce request with intermediate results
+message ReduceRequest {
+    map<string, int32> intermediate_counts = 1;
+}
+
+// Reduce response with final counts
+message ReduceResponse {
+    map<string, int32> final_counts = 1;
+    double processing_time = 2;
+}
+
+// Health check messages
+message HealthCheckRequest {
+    string service_name = 1;
+}
+
+message HealthCheckResponse {
+    bool status = 1;
+    string message = 2;
+}

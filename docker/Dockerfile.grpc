@@ -1,0 +1,21 @@
+# Dockerfile for gRPC implementation
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install dependencies
+COPY requirements-grpc.txt .
+RUN pip install --no-cache-dir -r requirements-grpc.txt
+
+# Copy gRPC implementation
+COPY grpc_implementation/ ./grpc_implementation/
+COPY data/ ./data/
+
+# Generate gRPC code
+WORKDIR /app/grpc_implementation
+RUN python -m grpc_tools.protoc -I./proto --python_out=. --grpc_python_out=. proto/mapreduce.proto
+
+WORKDIR /app
+
+# Default command (can be overridden)
+CMD ["python", "grpc_implementation/server.py"]
