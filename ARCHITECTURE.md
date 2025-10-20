@@ -156,43 +156,43 @@ service MapReduceService {
 
 ---
 
-## 4. Python Multiprocessing Implementation
+## 4. Request-Reply (ZeroMQ) Implementation
 
 ```
-┌────────────────────────────────────────────────────────┐
-│           Main Process (Master)                        │
-│  (multiprocessing_implementation/mapreduce.py)        │
-└───┬──────────────┬──────────────┬────────────────────┘
-    │              │              │
-    │              │              │
-    │ Pool.map()   │              │
-    ▼              ▼              ▼
-┌─────────┐    ┌─────────┐    ┌─────────┐
-│ Worker  │    │ Worker  │    │ Worker  │
-│ Process │    │ Process │    │ Process │
-│    1    │    │    2    │    │    3    │
-└────┬────┘    └────┬────┘    └────┬────┘
-     │              │              │
-     │map_function  │map_function  │map_function
-     ▼              ▼              ▼
-  Count Words   Count Words   Count Words
-     │              │              │
-     └──────────────┴──────────────┘
-                    │
-                    ▼
-            ┌───────────────┐
-            │ Main Process  │
-            │reduce_function│
-            └───────┬───────┘
-                    ▼
-            Final Word Counts
+┌──────────────────────────────────────────────────────────────┐
+│                    Request-Reply Client                       │
+│  (reqrep_implementation/client.py)                           │
+└─────┬─────────────┬─────────────┬──────────────────────────┘
+      │             │             │
+      │ REQ Socket  │ REQ Socket  │ REQ Socket
+      ▼             ▼             ▼
+┌──────────┐  ┌──────────┐  ┌──────────┐
+│ REP      │  │ REP      │  │ REP      │
+│ Server 1 │  │ Server 2 │  │ Server 3 │
+│ :5555    │  │ :5556    │  │ :5557    │
+└────┬─────┘  └────┬─────┘  └────┬─────┘
+     │             │             │
+     │ map()       │ map()       │ map()
+     ▼             ▼             ▼
+  Word Count   Word Count   Word Count
+  (Chunk 1)    (Chunk 2)    (Chunk 3)
+     │             │             │
+     └─────────────┴─────────────┘
+                   │
+                   ▼
+            ┌──────────┐
+            │ Server 1 │
+            │reduce()  │
+            └────┬─────┘
+                 ▼
+         Final Word Counts
 ```
 
 **Features:**
-- Shared memory space
-- Process pool
-- No network overhead
-- CPU-bound optimization
+- Lightweight ZeroMQ messaging
+- JSON-based serialization
+- REQ-REP socket pattern
+- Minimal overhead
 
 ---
 
@@ -402,7 +402,7 @@ This architecture provides:
 - ✅ Automated testing framework
 
 Each implementation demonstrates different trade-offs:
-- **gRPC**: Best for modern microservices
-- **XML-RPC**: Good for simple, compatible systems
-- **MPI**: Optimal for HPC and scientific computing
-- **Multiprocessing**: Best for local, CPU-intensive tasks
+- **gRPC:** Best for modern microservices
+- **XML-RPC:** Good for simple, compatible systems
+- **MPI:** Optimal for HPC and scientific computing
+- **Request-Reply**: Best for high-performance messaging and real-time systems

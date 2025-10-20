@@ -4,7 +4,7 @@
 This project compares the performance of different distributed computing approaches:
 - gRPC
 - XML-RPC
-- Python Multiprocessing
+- Request-Reply (ZeroMQ)
 - MPI (Message Passing Interface)
 
 ## Project Structure
@@ -20,19 +20,24 @@ This project compares the performance of different distributed computing approac
 ├── xmlrpc_implementation/
 │   ├── server.py
 │   └── client.py
-├── multiprocessing_implementation/
-│   └── mapreduce.py
+├── reqrep_implementation/
+│   ├── server.py
+│   └── client.py
 ├── mpi_implementation/
 │   └── mapreduce.py
 ├── docker/
 │   ├── Dockerfile.grpc
 │   ├── Dockerfile.xmlrpc
+│   ├── Dockerfile.reqrep
 │   ├── Dockerfile.mpi
 │   └── docker-compose.yml
 ├── data/
 │   └── sample_text.txt
 ├── performance_test.py
-└── requirements.txt
+├── requirements.txt
+├── requirements-grpc.txt
+├── requirements-reqrep.txt
+└── requirements-mpi.txt
 ```
 
 ## Setup Instructions
@@ -63,13 +68,16 @@ This project compares the performance of different distributed computing approac
 4. **Run tests**
    ```bash
    # Test gRPC
-   docker-compose up grpc-test
+   docker-compose up grpc-client
 
    # Test XML-RPC
-   docker-compose up xmlrpc-test
+   docker-compose up xmlrpc-client
+
+   # Test Request-Reply
+   docker-compose up reqrep-client
 
    # Test MPI
-   docker-compose up mpi-test
+   docker-compose run --rm mpi-runner
    ```
 
 ## Performance Testing

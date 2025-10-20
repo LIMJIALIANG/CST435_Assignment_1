@@ -58,9 +58,18 @@ docker-compose run --rm mpi-runner
 cd ..
 ```
 
-### Multiprocessing (local)
+### Request-Reply (ZeroMQ) (3 containers)
 ```powershell
-python multiprocessing_implementation/mapreduce.py
+# Start servers
+cd docker
+docker-compose up -d reqrep-server-1 reqrep-server-2 reqrep-server-3
+
+# Run client
+docker-compose run --rm reqrep-client
+
+# Stop
+docker-compose down
+cd ..
 ```
 
 ---
@@ -171,7 +180,7 @@ cd ..
 
 ## 📈 Expected Performance Order
 
-1. 🥇 **Multiprocessing** - Fastest (no network overhead)
+1. 🥇 **Request-Reply (ZeroMQ)** - Fast (lightweight messaging, binary protocol)
 2. 🥈 **MPI** - Fast (optimized message passing)
 3. 🥉 **gRPC** - Good (efficient binary protocol)
 4. 🏃 **XML-RPC** - Slower (text-based protocol)
@@ -217,7 +226,7 @@ cd ..
 - Final results table
 
 **Discussion Points:**
-- Why is multiprocessing fastest?
+- Why is Request-Reply fast compared to RPC?
 - Network overhead impact
 - Serialization efficiency
 - Scalability considerations

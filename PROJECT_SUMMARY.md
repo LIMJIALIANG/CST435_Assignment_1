@@ -13,7 +13,7 @@
 #### 1. **Four Different Implementations**
    - ✅ **gRPC** - Modern high-performance RPC (3 Docker containers)
    - ✅ **XML-RPC** - Traditional Python RPC (3 Docker containers)
-   - ✅ **Python Multiprocessing** - Local parallel processing (1 process, 3 workers)
+   - ✅ **Request-Reply (ZeroMQ)** - Message-based communication (3 Docker containers)
    - ✅ **MPI (mpi4py)** - Message Passing Interface (1 container, 3 processes)
 
 #### 2. **Docker Configuration**
@@ -138,11 +138,11 @@ performance_results/
 - HTTP/1.1 transport
 - Simple but verbose
 
-**Python Multiprocessing:**
-- Local parallelism
-- Shared memory
-- Process-based (not thread-based)
-- Good for CPU-bound tasks
+**Request-Reply (ZeroMQ):**
+- Lightweight messaging library
+- JSON-based serialization
+- REQ-REP socket pattern
+- Low overhead, high performance
 
 **MPI (Message Passing Interface):**
 - Industry standard for HPC
@@ -188,7 +188,7 @@ Example table:
 
 | Implementation | Mean Time (s) | Min (s) | Max (s) | Std Dev |
 |---------------|---------------|---------|---------|---------|
-| Multiprocessing | 0.0231 | 0.0224 | 0.0245 | 0.0009 |
+| Request-Reply | 0.0080 | 0.0075 | 0.0085 | 0.0004 |
 | MPI | 0.0387 | 0.0375 | 0.0401 | 0.0011 |
 | gRPC | 0.0445 | 0.0423 | 0.0478 | 0.0024 |
 | XML-RPC | 0.0612 | 0.0598 | 0.0635 | 0.0016 |
@@ -198,27 +198,27 @@ Include the generated charts from `performance_results/`
 #### 7. Discussion & Findings
 
 **Expected Findings:**
-- **Multiprocessing is fastest** - No network overhead, shared memory
+- **Request-Reply is fastest** - Lightweight ZeroMQ, minimal overhead
 - **MPI is close second** - Optimized for parallel computing
 - **gRPC performs well** - Efficient binary protocol, HTTP/2
 - **XML-RPC is slowest** - Text-based XML, HTTP/1.1 overhead
 
 **Why the differences?**
-1. **Serialization:** Binary (gRPC) vs. Text (XML-RPC)
-2. **Network:** Local (Multiprocessing) vs. Network (gRPC/XML-RPC)
-3. **Protocol:** Optimized (MPI) vs. General-purpose (RPC)
-4. **Overhead:** Container startup, network latency
+1. **Serialization:** Binary (gRPC) vs. Text (XML-RPC, JSON)
+2. **Protocol:** Lightweight (ZeroMQ) vs. Network (gRPC/XML-RPC)
+3. **Overhead:** Minimal (Request-Reply) vs. HTTP overhead (gRPC/XML-RPC)
+4. **Optimization:** Optimized (MPI) vs. General-purpose (RPC)
 
 **Real-world Applications:**
+- **Request-Reply:** High-performance messaging, microservices, real-time systems
 - **gRPC:** Microservices, distributed systems, mobile apps
 - **XML-RPC:** Legacy systems, simple integrations
-- **Multiprocessing:** Local computation, data processing
 - **MPI:** Scientific computing, simulations, HPC clusters
 
 #### 8. Team Division Example
 - Member 1: gRPC implementation and Docker setup
 - Member 2: XML-RPC and MPI implementations
-- Member 3: Multiprocessing and performance testing
+- Member 3: Request-Reply (ZeroMQ) and performance testing
 - Member 4: Documentation and testing
 - Member 5: Integration and deployment
 
@@ -296,8 +296,9 @@ example_map_reduce_program/
 │   ├── server.py
 │   └── client.py
 │
-├── 📁 multiprocessing_implementation/
-│   └── mapreduce.py
+├── 📁 reqrep_implementation/
+│   ├── server.py
+│   └── client.py
 │
 ├── 📁 mpi_implementation/
 │   └── mapreduce.py
@@ -356,7 +357,7 @@ By completing this project, you will:
 - **gRPC Tutorial:** https://grpc.io/docs/languages/python/quickstart/
 - **Docker Guide:** https://docs.docker.com/get-started/
 - **MPI Tutorial:** https://mpi4py.readthedocs.io/en/stable/tutorial.html
-- **Python Multiprocessing:** https://docs.python.org/3/library/multiprocessing.html
+- **ZeroMQ Guide:** https://zeromq.org/get-started/
 - **MapReduce Paper:** Google MapReduce (Dean & Ghemawat, 2004)
 
 ---

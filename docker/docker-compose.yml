@@ -112,6 +112,60 @@ services:
     command: >
       sh -c "sleep 5 && python xmlrpc_implementation/client.py"
 
+  # Request-Reply (ZeroMQ) Servers (3 containers)
+  reqrep-server-1:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.reqrep
+    container_name: reqrep-server-1
+    environment:
+      - REQREP_PORT=5555
+    ports:
+      - "5555:5555"
+    networks:
+      - mapreduce-net
+
+  reqrep-server-2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.reqrep
+    container_name: reqrep-server-2
+    environment:
+      - REQREP_PORT=5555
+    ports:
+      - "5556:5555"
+    networks:
+      - mapreduce-net
+
+  reqrep-server-3:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.reqrep
+    container_name: reqrep-server-3
+    environment:
+      - REQREP_PORT=5555
+    ports:
+      - "5557:5555"
+    networks:
+      - mapreduce-net
+
+  # Request-Reply Client (test)
+  reqrep-client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.reqrep
+    container_name: reqrep-client
+    environment:
+      - REQREP_SERVERS=tcp://reqrep-server-1:5555,tcp://reqrep-server-2:5555,tcp://reqrep-server-3:5555
+    networks:
+      - mapreduce-net
+    depends_on:
+      - reqrep-server-1
+      - reqrep-server-2
+      - reqrep-server-3
+    command: >
+      sh -c "sleep 5 && python reqrep_implementation/client.py"
+
   # MPI Container
   mpi-runner:
     build:

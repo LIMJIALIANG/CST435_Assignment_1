@@ -23,7 +23,7 @@ This project compares **4 different distributed computing approaches**:
 |---------------|------------|------------|---------|
 | **gRPC** | Modern RPC framework | 3 servers | High-performance RPC |
 | **XML-RPC** | Traditional RPC | 3 servers | Simple RPC baseline |
-| **Multiprocessing** | Python built-in | 1 (3 processes) | Local parallelism |
+| **Request-Reply** | ZeroMQ messaging | 3 servers | Message-based communication |
 | **MPI** | Message Passing | 1 (3 processes) | HPC standard |
 
 All implementations solve the same problem: **MapReduce Word Count**
@@ -67,8 +67,9 @@ example_map_reduce_program/
 │   ├── server.py                 # XML-RPC server
 │   └── client.py                 # XML-RPC client
 │
-├── multiprocessing_implementation/ # Python Multiprocessing
-│   └── mapreduce.py              # Multiprocessing implementation
+├── reqrep_implementation/         # Request-Reply (ZeroMQ) MapReduce
+│   ├── server.py                 # Request-Reply server
+│   └── client.py                 # Request-Reply client
 │
 ├── mpi_implementation/            # MPI MapReduce
 │   └── mapreduce.py              # MPI implementation
@@ -76,6 +77,7 @@ example_map_reduce_program/
 ├── docker/                        # Docker configuration
 │   ├── Dockerfile.grpc           # gRPC Docker image
 │   ├── Dockerfile.xmlrpc         # XML-RPC Docker image
+│   ├── Dockerfile.reqrep         # Request-Reply Docker image
 │   ├── Dockerfile.mpi            # MPI Docker image
 │   └── docker-compose.yml        # Multi-container orchestration
 │
@@ -89,6 +91,9 @@ example_map_reduce_program/
 │
 ├── performance_test.py            # Automated performance testing
 ├── requirements.txt               # Python dependencies
+├── requirements-grpc.txt          # gRPC-specific dependencies
+├── requirements-reqrep.txt        # Request-Reply dependencies
+├── requirements-mpi.txt           # MPI dependencies
 ├── setup.ps1                      # Windows setup script
 ├── setup.sh                       # Linux/Mac setup script
 ├── test_all.ps1                   # Quick test script
@@ -166,6 +171,9 @@ This will test each implementation sequentially.
 **Start 3 gRPC servers:**
 ```powershell
 cd docker
+```for first time set-up server
+docker-compose build grpc-server-1
+```then
 docker-compose up -d grpc-server-1 grpc-server-2 grpc-server-3
 ```
 
@@ -217,6 +225,9 @@ cd ..
 **Start 3 XML-RPC servers:**
 ```powershell
 cd docker
+```for first time set-up this server
+docker-compose build xmlrpc-server-1
+```then
 docker-compose up -d xmlrpc-server-1 xmlrpc-server-2 xmlrpc-server-3
 ```
 
@@ -233,7 +244,54 @@ cd ..
 
 ---
 
-### 3. Test MPI Implementation
+### 3. Test Request-Reply Implementation
+
+**Start 3 Request-Reply servers:**
+```powershell
+cd docker
+docker-compose build reqrep-server-1
+docker-compose up -d reqrep-server-1 reqrep-server-2 reqrep-server-3
+```
+
+**Run client:**
+```powershell
+docker-compose run --rm reqrep-client
+```
+
+**Expected output:**
+```
+Connected to 3 Request-Reply servers
+Server 1: Request-Reply MapReduce service is healthy on port 5555
+Server 2: Request-Reply MapReduce service is healthy on port 5555
+Server 3: Request-Reply MapReduce service is healthy on port 5555
+
+Processing text with 1206 characters...
+Map phase completed in 0.0198s
+Reduce phase completed in 0.0015s
+
+============================================================
+RESULTS:
+============================================================
+Total Duration: 0.0285s
+Map Duration: 0.0198s
+Reduce Duration: 0.0015s
+Number of Servers: 3
+
+Top 10 Words:
+  is: 6
+  performance: 5
+  ...
+```
+
+**Stop servers:**
+```powershell
+docker-compose down
+cd ..
+```
+
+---
+
+### 4. Test MPI Implementation
 
 **Run MPI (single container, 3 processes):**
 ```powershell
@@ -257,21 +315,25 @@ Reduce: Aggregated 89 unique words in 0.0009s
 
 ---
 
-### 4. Test Multiprocessing Implementation
+### 4. Test MPI Implementation
 
-**Run locally (no Docker needed):**
+**Run MPI (single container, 3 processes):**
 ```powershell
-python multiprocessing_implementation/mapreduce.py
+cd docker
+docker-compose run --rm mpi-runner
+cd ..
 ```
 
 **Expected output:**
 ```
-Initialized with 3 worker processes
+MPI MapReduce with 3 processes
 Processing text with 1234 characters...
-Map - Chunk 0: Processed 45 words in 0.0011s
-Map - Chunk 1: Processed 47 words in 0.0010s
-Map - Chunk 2: Processed 46 words in 0.0012s
-Map phase completed in 0.0187s
+Rank 0 - Processed 45 words in 0.0015s
+Rank 1 - Processed 47 words in 0.0014s
+Rank 2 - Processed 46 words in 0.0016s
+
+Map phase completed in 0.0234s
+Reduce: Aggregated 89 unique words in 0.0009s
 ...
 ```
 
@@ -307,14 +369,15 @@ Starting XML-RPC servers...
 Duration: 0.0623s
 ...
 
+Testing Request-Reply Implementation
+Run 1/3
+Starting Request-Reply servers...
+Duration: 0.0298s
+...
+
 Testing MPI Implementation
 Run 1/3
 Duration: 0.0389s
-...
-
-Testing Multiprocessing Implementation
-Run 1/3
-Duration: 0.0234s
 ...
 
 PERFORMANCE COMPARISON REPORT
@@ -324,7 +387,7 @@ Implementation       Mean       Min        Max        Runs
 ------------------------------------------------------------
 grpc                0.0445     0.0423     0.0478     3         
 xmlrpc              0.0612     0.0598     0.0635     3         
-multiprocessing     0.0231     0.0224     0.0245     3         
+reqrep              0.0298     0.0285     0.0312     3         
 mpi                 0.0387     0.0375     0.0401     3         
 
 Chart saved to: performance_results/performance_comparison_20251019_143022.png
@@ -381,7 +444,7 @@ grpc,3,0.0478
    - Higher is better
 
 ### Expected Performance Order (typically):
-1. **Multiprocessing** - Fastest (local, no network overhead)
+1. **Request-Reply (ZeroMQ)** - Fast (lightweight messaging, binary protocol)
 2. **MPI** - Fast (optimized for HPC)
 3. **gRPC** - Good (binary protocol, efficient)
 4. **XML-RPC** - Slowest (text-based XML, overhead)

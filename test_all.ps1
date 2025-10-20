@@ -4,14 +4,25 @@
 Write-Host "Quick Test - All Implementations" -ForegroundColor Green
 Write-Host "=" * 60
 
-# Test 1: Multiprocessing (fastest to test)
-Write-Host "`n[1/4] Testing Multiprocessing..." -ForegroundColor Yellow
-python multiprocessing_implementation/mapreduce.py
+# Test 1: Request-Reply (fastest to test)
+Write-Host "`n[1/4] Testing Request-Reply..." -ForegroundColor Yellow
+Write-Host "Starting Request-Reply servers..." -ForegroundColor Cyan
+cd docker
+docker-compose up -d reqrep-server-1 reqrep-server-2 reqrep-server-3
+Start-Sleep -Seconds 5
+
+Write-Host "Running Request-Reply client..." -ForegroundColor Cyan
+docker-compose run --rm reqrep-client
+
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "✓ Multiprocessing test passed!" -ForegroundColor Green
+    Write-Host "✓ Request-Reply test passed!" -ForegroundColor Green
 } else {
-    Write-Host "✗ Multiprocessing test failed!" -ForegroundColor Red
+    Write-Host "✗ Request-Reply test failed!" -ForegroundColor Red
 }
+
+docker-compose down
+cd ..
+Start-Sleep -Seconds 2
 
 # Test 2: gRPC
 Write-Host "`n[2/4] Testing gRPC..." -ForegroundColor Yellow

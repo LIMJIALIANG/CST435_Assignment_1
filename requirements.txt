@@ -11,4 +11,4 @@ numpy==1.26.2
 
 # Note: mpi4py is NOT included here as it requires system MPI libraries
 # It's only installed in the MPI Docker container
-# For local testing, multiprocessing implementation doesn't need MPI
+# pyzmq is included for local testing of request-reply implementation
