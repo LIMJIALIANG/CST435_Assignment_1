@@ -6,30 +6,57 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Performance Test Script                       │
 │                  (performance_test.py)                           │
-└────────┬────────────┬────────────┬─────────────┬────────────────┘
-         │            │            │             │
-         │            │            │             │
-    ┌────▼────┐  ┌───▼────┐  ┌────▼────┐  ┌────▼─────┐
-    │  gRPC   │  │XML-RPC │  │   MPI   │  │Multi-    │
-    │  Test   │  │  Test  │  │  Test   │  │processing│
-    └────┬────┘  └───┬────┘  └────┬────┘  └────┬─────┘
-         │            │            │             │
-         ▼            ▼            ▼             ▼
+└────────┬────────────┬────────────┬────────────┬────────────────┘
+         │            │            │            │
+         │            │            │            │
+    ┌────▼────┐  ┌───▼────┐  ┌───▼────┐  ┌────▼─────┐
+    │  gRPC   │  │  gRPC  │  │XML-RPC │  │   MPI    │
+    │ Single  │  │ Multi  │  │  Test  │  │  Test    │
+    └────┬────┘  └───┬────┘  └───┬────┘  └────┬─────┘
+         │            │            │            │
+         ▼            ▼            ▼            ▼
     Performance   Performance Performance  Performance
       Metrics       Metrics      Metrics      Metrics
-         │            │            │             │
-         └────────────┴────────────┴─────────────┘
+         │            │            │            │
+         └────────────┴────────────┴────────────┘
                            │
                            ▼
               ┌────────────────────────┐
               │  Results & Comparison  │
               │  - JSON, CSV, Charts   │
+              │  - Container Overhead  │
               └────────────────────────┘
 ```
 
 ---
 
 ## 1. gRPC Implementation
+
+### Mode 1: Single Machine (Local Process)
+
+```
+┌──────────────────────────────────────┐
+│       gRPC Client                     │
+│  (Local Python Process)              │
+└─────┬────────────────────────────────┘
+      │
+      │ gRPC Call (localhost:50051)
+      ▼
+┌──────────┐
+│ gRPC     │
+│ Server   │  ← Single local process
+│ :50051   │     No Docker containers
+└────┬─────┘
+     │
+     │ Map() → Reduce()
+     ▼
+  Word Count
+     │
+     ▼
+Final Word Counts
+```
+
+### Mode 2: Multiple Containers (Distributed)
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -41,7 +68,7 @@
       ▼             ▼             ▼
 ┌──────────┐  ┌──────────┐  ┌──────────┐
 │ gRPC     │  │ gRPC     │  │ gRPC     │
-│ Server 1 │  │ Server 2 │  │ Server 3 │
+│ Server 1 │  │ Server 2 │  │ Server 3 │  ← Docker containers
 │ :50051   │  │ :50052   │  │ :50053   │
 └────┬─────┘  └────┬─────┘  └────┬─────┘
      │             │             │
@@ -58,6 +85,10 @@
                    ▼
             Final Word Counts
 ```
+
+**Comparison:**
+- **Single Machine**: Faster (no network/container overhead)
+- **Multiple Containers**: Scalable (can distribute across machines)
 
 **Data Flow:**
 1. Client reads text file

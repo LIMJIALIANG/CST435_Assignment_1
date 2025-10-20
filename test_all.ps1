@@ -84,3 +84,7 @@ Write-Host ("=" * 60) -ForegroundColor Green
 Write-Host "`nAll implementations tested successfully!" -ForegroundColor Green
 Write-Host "You can now run the full performance comparison:" -ForegroundColor Yellow
 Write-Host "  python performance_test.py" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "This will test:" -ForegroundColor Yellow
+Write-Host "  - gRPC: Single Machine vs Multiple Containers" -ForegroundColor Cyan
+Write-Host "  - XML-RPC, Request-Reply, and MPI" -ForegroundColor Cyan

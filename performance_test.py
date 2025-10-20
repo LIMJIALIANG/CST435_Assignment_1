@@ -17,32 +17,77 @@ class PerformanceTester:
     def __init__(self):
         self.results = {
             'grpc': [],
+            'grpc_single': [],  # Single machine gRPC
+            'grpc_multi': [],   # Multiple containers gRPC
             'xmlrpc': [],
             'reqrep': [],
             'mpi': []
         }
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     
-    def test_grpc(self, num_runs=5):
-        """Test gRPC implementation"""
+    def test_grpc_single(self, num_runs=5):
+        """Test gRPC on single machine (local process)"""
         print("\n" + "="*60)
-        print("Testing gRPC Implementation")
+        print("Testing gRPC - Single Machine")
+        print("="*60)
+        
+        for run in range(num_runs):
+            print(f"\nRun {run + 1}/{num_runs}")
+            
+            # Start local server
+            print("Starting local gRPC server...")
+            server_process = subprocess.Popen(
+                ["python", "grpc_implementation/server.py"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env={**os.environ, 'GRPC_PORT': '50051'}
+            )
+            
+            time.sleep(3)
+            
+            try:
+                start_time = time.time()
+                result = subprocess.run(
+                    ["python", "grpc_implementation/client.py"],
+                    capture_output=True,
+                    text=True,
+                    env={**os.environ, 'GRPC_SERVERS': 'localhost:50051'}
+                )
+                duration = time.time() - start_time
+                
+                self.results['grpc_single'].append({
+                    'run': run + 1,
+                    'duration': duration,
+                    'output': result.stdout
+                })
+                
+                print(f"Duration: {duration:.4f}s")
+            finally:
+                server_process.terminate()
+                server_process.wait(timeout=5)
+            
+            time.sleep(2)
+        
+        return self.results['grpc_single']
+    
+    def test_grpc_multi(self, num_runs=5):
+        """Test gRPC with multiple containers"""
+        print("\n" + "="*60)
+        print("Testing gRPC - Multiple Containers")
         print("="*60)
         
         for run in range(num_runs):
             print(f"\nRun {run + 1}/{num_runs}")
             
             # Start servers
-            print("Starting gRPC servers...")
+            print("Starting 3 gRPC server containers...")
             subprocess.run([
                 "docker-compose", "-f", "docker/docker-compose.yml",
                 "up", "-d", "grpc-server-1", "grpc-server-2", "grpc-server-3"
             ])
             
-            # Wait for servers to be ready
             time.sleep(5)
             
-            # Run client and capture output
             start_time = time.time()
             result = subprocess.run([
                 "docker-compose", "-f", "docker/docker-compose.yml",
@@ -51,7 +96,7 @@ class PerformanceTester:
             
             duration = time.time() - start_time
             
-            self.results['grpc'].append({
+            self.results['grpc_multi'].append({
                 'run': run + 1,
                 'duration': duration,
                 'output': result.stdout
@@ -67,7 +112,13 @@ class PerformanceTester:
             
             time.sleep(2)
         
-        return self.results['grpc']
+        return self.results['grpc_multi']
+    
+    def test_grpc(self, num_runs=5):
+        """Test gRPC implementation (calls both single and multi)"""
+        self.test_grpc_single(num_runs)
+        self.test_grpc_multi(num_runs)
+        return self.results['grpc_multi']
     
     def test_xmlrpc(self, num_runs=5):
         """Test XML-RPC implementation"""
@@ -216,6 +267,26 @@ class PerformanceTester:
         
         for impl, data in stats.items():
             print(f"{impl:<20} {data['mean']:<10.4f} {data['min']:<10.4f} {data['max']:<10.4f} {data['runs']:<10}")
+        
+        # gRPC comparison analysis
+        if 'grpc_single' in stats and 'grpc_multi' in stats:
+            print("\n" + "="*60)
+            print("gRPC: Single Machine vs Multiple Containers")
+            print("="*60)
+            single = stats['grpc_single']['mean']
+            multi = stats['grpc_multi']['mean']
+            overhead = ((multi - single) / single) * 100
+            
+            print(f"Single Machine:       {single:.4f}s")
+            print(f"Multiple Containers:  {multi:.4f}s")
+            print(f"Container Overhead:   {overhead:+.2f}%")
+            
+            if single < multi:
+                print(f"Result: Single machine is {multi/single:.2f}x faster")
+                print("Recommendation: Use single machine for small datasets")
+            else:
+                print(f"Result: Containers are {single/multi:.2f}x faster")
+                print("Recommendation: Use containers for large datasets and production")
         
         # Create comparison chart
         self._create_charts(stats)

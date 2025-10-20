@@ -76,8 +76,15 @@ cd ..
 
 ## 📊 Performance Testing
 ```powershell
-# Run automated comparison
+# Run full comparison (includes gRPC single vs multi, all implementations)
 python performance_test.py
+
+# Tests performed:
+# - gRPC: Single Machine (local process)
+# - gRPC: Multiple Containers (3 containers)
+# - XML-RPC (3 containers)
+# - Request-Reply (3 containers)
+# - MPI (1 container, 3 processes)
 
 # Results saved to:
 # - performance_results/results_*.json

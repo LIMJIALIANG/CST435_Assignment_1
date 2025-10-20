@@ -11,7 +11,9 @@
 ### Complete Implementation Package Including:
 
 #### 1. **Four Different Implementations**
-   - ✅ **gRPC** - Modern high-performance RPC (3 Docker containers)
+   - ✅ **gRPC** - Modern high-performance RPC
+     - Single Machine mode (local process)
+     - Multiple Containers mode (3 Docker containers)
    - ✅ **XML-RPC** - Traditional Python RPC (3 Docker containers)
    - ✅ **Request-Reply (ZeroMQ)** - Message-based communication (3 Docker containers)
    - ✅ **MPI (mpi4py)** - Message Passing Interface (1 container, 3 processes)
@@ -45,6 +47,7 @@
 ### Assignment Requirements:
 ✅ Install and use Docker  
 ✅ Implement gRPC for distributed processing  
+✅ Compare single computer vs multiple containers ⭐ **NEW**  
 ✅ Compare with other parallel/distributed approaches  
 ✅ Run on multiple containers  
 ✅ Measure and compare performance  
@@ -65,8 +68,11 @@ Input: Text file → Split into chunks → Map (count words) → Reduce (aggrega
 ```
 
 ### Performance Comparison:
+- Tests gRPC in **two modes**: Single Machine and Multiple Containers
+- Tests other implementations (XML-RPC, Request-Reply, MPI)
 - Each implementation is run multiple times
 - Execution time is measured
+- Container overhead is calculated for gRPC
 - Results are aggregated and visualized
 - Charts and CSV files are generated
 
@@ -101,17 +107,20 @@ python performance_test.py
 ```
 
 This will:
-- Run each implementation 3 times
-- Collect performance metrics
+- Run gRPC in **single machine mode** (local process)
+- Run gRPC in **multiple containers mode** (3 containers)
+- Run other implementations (XML-RPC, Request-Reply, MPI)
+- Each test runs 3 times
+- Collect performance metrics and calculate container overhead
 - Generate comparison charts
 - Save results to JSON and CSV
 
 ### Results Location:
 ```
 performance_results/
-├── results_20251019_143022.json    # Detailed results
-├── results_20251019_143022.csv     # Tabular data
-└── performance_comparison_20251019_143022.png  # Visualization
+├── results_20251020_143022.json    # Detailed results (includes single vs multi)
+├── results_20251020_143022.csv     # Tabular data
+└── performance_comparison_20251020_143022.png  # Visualization
 ```
 
 ---
@@ -131,6 +140,9 @@ performance_results/
 - Uses Protocol Buffers (binary serialization)
 - HTTP/2 transport
 - Strong typing
+- **Tested in two modes**:
+  - Single Machine: Local process (no containers)
+  - Multiple Containers: Distributed across 3 Docker containers
 
 **XML-RPC:**
 - Traditional RPC approach

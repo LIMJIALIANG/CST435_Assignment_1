@@ -349,35 +349,43 @@ python performance_test.py
 ```
 
 **What it does:**
-1. Runs each implementation **3 times** (configurable)
-2. Measures execution time for each run
-3. Calculates statistics (mean, min, max)
-4. Generates comparison charts
-5. Saves results to JSON and CSV
+1. Tests **gRPC in two modes**: Single Machine and Multiple Containers
+2. Tests other implementations (XML-RPC, Request-Reply, MPI)
+3. Runs each test **3 times** (configurable)
+4. Measures execution time for each run
+5. Calculates statistics and overhead
+6. Generates comparison charts
+7. Saves results to JSON and CSV
 
 **Process:**
 ```
-Testing gRPC Implementation
+Testing gRPC - Single Machine
 Run 1/3
-Starting gRPC servers...
-Duration: 0.0456s
+Starting local gRPC server...
+Duration: 2.3450s
+...
+
+Testing gRPC - Multiple Containers
+Run 1/3
+Starting 3 gRPC server containers...
+Duration: 2.6700s
 ...
 
 Testing XML-RPC Implementation
 Run 1/3
 Starting XML-RPC servers...
-Duration: 0.0623s
+Duration: 3.0623s
 ...
 
 Testing Request-Reply Implementation
 Run 1/3
 Starting Request-Reply servers...
-Duration: 0.0298s
+Duration: 2.8298s
 ...
 
 Testing MPI Implementation
 Run 1/3
-Duration: 0.0389s
+Duration: 3.0389s
 ...
 
 PERFORMANCE COMPARISON REPORT
@@ -385,14 +393,24 @@ PERFORMANCE COMPARISON REPORT
 Execution Times (seconds):
 Implementation       Mean       Min        Max        Runs      
 ------------------------------------------------------------
-grpc                0.0445     0.0423     0.0478     3         
-xmlrpc              0.0612     0.0598     0.0635     3         
-reqrep              0.0298     0.0285     0.0312     3         
-mpi                 0.0387     0.0375     0.0401     3         
+grpc_single         2.3450     2.2100     2.4500     3         
+grpc_multi          2.6700     2.5200     2.7900     3         
+xmlrpc              3.0612     2.9598     3.1635     3         
+reqrep              2.8298     2.7285     2.9312     3         
+mpi                 3.0387     2.9375     3.1401     3         
 
-Chart saved to: performance_results/performance_comparison_20251019_143022.png
-Results saved to: performance_results/results_20251019_143022.json
-CSV saved to: performance_results/results_20251019_143022.csv
+============================================================
+gRPC: Single Machine vs Multiple Containers
+============================================================
+Single Machine:       2.3450s
+Multiple Containers:  2.6700s
+Container Overhead:   +13.86%
+Result: Single machine is 1.14x faster
+Recommendation: Use single machine for small datasets
+
+Chart saved to: performance_results/performance_comparison_20251020_143022.png
+Results saved to: performance_results/results_20251020_143022.json
+CSV saved to: performance_results/results_20251020_143022.csv
 ```
 
 ### Output Files
@@ -400,12 +418,18 @@ CSV saved to: performance_results/results_20251019_143022.csv
 **1. JSON File** (`results_YYYYMMDD_HHMMSS.json`)
 ```json
 {
-  "timestamp": "20251019_143022",
+  "timestamp": "20251020_143022",
   "statistics": {
-    "grpc": {
-      "mean": 0.0445,
-      "min": 0.0423,
-      "max": 0.0478,
+    "grpc_single": {
+      "mean": 2.3450,
+      "min": 2.2100,
+      "max": 2.4500,
+      "runs": 3
+    },
+    "grpc_multi": {
+      "mean": 2.6700,
+      "min": 2.5200,
+      "max": 2.7900,
       "runs": 3
     },
     ...
@@ -417,9 +441,12 @@ CSV saved to: performance_results/results_20251019_143022.csv
 **2. CSV File** (`results_YYYYMMDD_HHMMSS.csv`)
 ```csv
 Implementation,Run,Duration
-grpc,1,0.0445
-grpc,2,0.0423
-grpc,3,0.0478
+grpc_single,1,2.3450
+grpc_single,2,2.2100
+grpc_single,3,2.4500
+grpc_multi,1,2.6700
+grpc_multi,2,2.5200
+grpc_multi,3,2.7900
 ...
 ```
 
@@ -434,23 +461,50 @@ grpc,3,0.0478
 1. **Total Duration**: End-to-end execution time
    - Includes network overhead, serialization, processing
 
-2. **Map Duration**: Time for parallel word counting
+2. **Container Overhead**: Performance penalty from containerization
+   - Formula: `((multi - single) / single) × 100%`
+   - Example: +13.86% means containers add 13.86% overhead
+
+3. **Map Duration**: Time for parallel word counting
    - Shows distribution efficiency
 
-3. **Reduce Duration**: Time for aggregation
+4. **Reduce Duration**: Time for aggregation
    - Usually minimal for small datasets
 
-4. **Throughput**: Operations per second
+5. **Throughput**: Operations per second
    - Higher is better
 
+### gRPC: Single Machine vs Multiple Containers
+
+**Why Single Machine is Faster:**
+- No network serialization/deserialization
+- No Docker networking overhead
+- Direct memory access
+- No container isolation overhead
+
+**When to Use Single Machine:**
+- Development and testing
+- Small datasets (< 100MB)
+- Low latency requirements
+- Single physical machine deployment
+
+**When to Use Multiple Containers:**
+- Production deployments
+- Large datasets (> 1GB)
+- Need fault tolerance
+- Horizontal scaling across machines
+- Cloud deployments
+
 ### Expected Performance Order (typically):
-1. **Request-Reply (ZeroMQ)** - Fast (lightweight messaging, binary protocol)
-2. **MPI** - Fast (optimized for HPC)
-3. **gRPC** - Good (binary protocol, efficient)
-4. **XML-RPC** - Slowest (text-based XML, overhead)
+1. **gRPC Single** - Fastest (no container overhead)
+2. **Request-Reply (ZeroMQ)** - Fast (lightweight messaging)
+3. **gRPC Multi** - Good (efficient but container overhead)
+4. **MPI** - Good (optimized for HPC)
+5. **XML-RPC** - Slowest (text-based XML, overhead)
 
 ### Factors Affecting Performance:
 - **Network latency**: Docker networking overhead
+- **Container overhead**: Isolation and orchestration cost
 - **Serialization**: Protocol efficiency (binary vs. text)
 - **Container startup**: Docker container initialization
 - **Data size**: Larger datasets show more differences

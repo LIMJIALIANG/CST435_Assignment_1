@@ -1,13 +1,13 @@
 # gRPC dependencies
-grpcio==1.60.0
-grpcio-tools==1.60.0
-protobuf==4.25.1
+grpcio>=1.60.0
+grpcio-tools>=1.60.0
+protobuf>=4.25.0
 
 # Performance monitoring (for performance_test.py)
-psutil==5.9.6
-matplotlib==3.8.2
-pandas==2.1.4
-numpy==1.26.2
+psutil>=5.9.0
+matplotlib>=3.8.0
+pandas>=2.0.0
+numpy>=1.24.0
 
 # Note: mpi4py is NOT included here as it requires system MPI libraries
 # It's only installed in the MPI Docker container
