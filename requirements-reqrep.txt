@@ -1,2 +1,0 @@
-# Request-Reply (ZeroMQ) dependencies
-pyzmq==25.1.1

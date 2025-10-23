@@ -20,7 +20,6 @@ class PerformanceTester:
             'grpc_single': [],  # Single machine gRPC
             'grpc_multi': [],   # Multiple containers gRPC
             'xmlrpc': [],
-            'reqrep': [],
             'mpi': []
         }
         self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -196,52 +195,6 @@ class PerformanceTester:
         
         return self.results['mpi']
     
-    def test_reqrep(self, num_runs=5):
-        """Test Request-Reply implementation"""
-        print("\n" + "="*60)
-        print("Testing Request-Reply Implementation")
-        print("="*60)
-        
-        for run in range(num_runs):
-            print(f"\nRun {run + 1}/{num_runs}")
-            
-            # Start servers
-            print("Starting Request-Reply servers...")
-            subprocess.run([
-                "docker-compose", "-f", "docker/docker-compose.yml",
-                "up", "-d", "reqrep-server-1", "reqrep-server-2", "reqrep-server-3"
-            ])
-            
-            # Wait for servers to be ready
-            time.sleep(5)
-            
-            # Run client and capture output
-            start_time = time.time()
-            result = subprocess.run([
-                "docker-compose", "-f", "docker/docker-compose.yml",
-                "run", "--rm", "reqrep-client"
-            ], capture_output=True, text=True)
-            
-            duration = time.time() - start_time
-            
-            self.results['reqrep'].append({
-                'run': run + 1,
-                'duration': duration,
-                'output': result.stdout
-            })
-            
-            print(f"Duration: {duration:.4f}s")
-            
-            # Stop servers
-            subprocess.run([
-                "docker-compose", "-f", "docker/docker-compose.yml",
-                "down"
-            ])
-            
-            time.sleep(2)
-        
-        return self.results['reqrep']
-    
     def generate_report(self):
         """Generate performance comparison report"""
         print("\n" + "="*60)
@@ -392,9 +345,6 @@ def main():
         
         # Test XML-RPC
         tester.test_xmlrpc(num_runs)
-        
-        # Test Request-Reply
-        tester.test_reqrep(num_runs)
         
         # Test MPI
         tester.test_mpi(num_runs)

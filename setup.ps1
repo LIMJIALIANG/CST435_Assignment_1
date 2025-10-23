@@ -56,7 +56,6 @@ Write-Host "`nNext steps:" -ForegroundColor Yellow
 Write-Host "1. Test individual implementations:"
 Write-Host "   - gRPC:           cd docker; docker-compose up grpc-client"
 Write-Host "   - XML-RPC:        cd docker; docker-compose up xmlrpc-client"
-Write-Host "   - Request-Reply:  cd docker; docker-compose run --rm reqrep-client"
 Write-Host "   - MPI:            cd docker; docker-compose run --rm mpi-runner"
 Write-Host ""
 Write-Host "2. Run performance comparison (includes single vs multi):"

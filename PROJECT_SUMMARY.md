@@ -10,12 +10,11 @@
 
 ### Complete Implementation Package Including:
 
-#### 1. **Four Different Implementations**
+#### 1. **Three Different Implementations**
    - ✅ **gRPC** - Modern high-performance RPC
      - Single Machine mode (local process)
      - Multiple Containers mode (3 Docker containers)
    - ✅ **XML-RPC** - Traditional Python RPC (3 Docker containers)
-   - ✅ **Request-Reply (ZeroMQ)** - Message-based communication (3 Docker containers)
    - ✅ **MPI (mpi4py)** - Message Passing Interface (1 container, 3 processes)
 
 #### 2. **Docker Configuration**
@@ -69,7 +68,7 @@ Input: Text file → Split into chunks → Map (count words) → Reduce (aggrega
 
 ### Performance Comparison:
 - Tests gRPC in **two modes**: Single Machine and Multiple Containers
-- Tests other implementations (XML-RPC, Request-Reply, MPI)
+- Tests other implementations (XML-RPC, MPI)
 - Each implementation is run multiple times
 - Execution time is measured
 - Container overhead is calculated for gRPC
@@ -109,7 +108,7 @@ python performance_test.py
 This will:
 - Run gRPC in **single machine mode** (local process)
 - Run gRPC in **multiple containers mode** (3 containers)
-- Run other implementations (XML-RPC, Request-Reply, MPI)
+- Run other implementations (XML-RPC, MPI)
 - Each test runs 3 times
 - Collect performance metrics and calculate container overhead
 - Generate comparison charts
@@ -149,12 +148,6 @@ performance_results/
 - XML-based (text serialization)
 - HTTP/1.1 transport
 - Simple but verbose
-
-**Request-Reply (ZeroMQ):**
-- Lightweight messaging library
-- JSON-based serialization
-- REQ-REP socket pattern
-- Low overhead, high performance
 
 **MPI (Message Passing Interface):**
 - Industry standard for HPC
@@ -200,9 +193,8 @@ Example table:
 
 | Implementation | Mean Time (s) | Min (s) | Max (s) | Std Dev |
 |---------------|---------------|---------|---------|---------|
-| Request-Reply | 0.0080 | 0.0075 | 0.0085 | 0.0004 |
-| MPI | 0.0387 | 0.0375 | 0.0401 | 0.0011 |
 | gRPC | 0.0445 | 0.0423 | 0.0478 | 0.0024 |
+| MPI | 0.0387 | 0.0375 | 0.0401 | 0.0011 |
 | XML-RPC | 0.0612 | 0.0598 | 0.0635 | 0.0016 |
 
 Include the generated charts from `performance_results/`
@@ -210,19 +202,16 @@ Include the generated charts from `performance_results/`
 #### 7. Discussion & Findings
 
 **Expected Findings:**
-- **Request-Reply is fastest** - Lightweight ZeroMQ, minimal overhead
-- **MPI is close second** - Optimized for parallel computing
+- **MPI is fastest** - Optimized for parallel computing
 - **gRPC performs well** - Efficient binary protocol, HTTP/2
 - **XML-RPC is slowest** - Text-based XML, HTTP/1.1 overhead
 
 **Why the differences?**
-1. **Serialization:** Binary (gRPC) vs. Text (XML-RPC, JSON)
-2. **Protocol:** Lightweight (ZeroMQ) vs. Network (gRPC/XML-RPC)
-3. **Overhead:** Minimal (Request-Reply) vs. HTTP overhead (gRPC/XML-RPC)
-4. **Optimization:** Optimized (MPI) vs. General-purpose (RPC)
+1. **Serialization:** Binary (gRPC) vs. Text (XML-RPC)
+2. **Protocol:** Lightweight vs. Network overhead
+3. **Optimization:** Optimized (MPI) vs. General-purpose (RPC)
 
 **Real-world Applications:**
-- **Request-Reply:** High-performance messaging, microservices, real-time systems
 - **gRPC:** Microservices, distributed systems, mobile apps
 - **XML-RPC:** Legacy systems, simple integrations
 - **MPI:** Scientific computing, simulations, HPC clusters
@@ -230,9 +219,9 @@ Include the generated charts from `performance_results/`
 #### 8. Team Division Example
 - Member 1: gRPC implementation and Docker setup
 - Member 2: XML-RPC and MPI implementations
-- Member 3: Request-Reply (ZeroMQ) and performance testing
-- Member 4: Documentation and testing
-- Member 5: Integration and deployment
+- Member 3: Performance testing and documentation
+- Member 4: Testing and integration
+- Member 5: Deployment and final report
 
 #### 9. Challenges & Solutions
 - Docker networking configuration
@@ -305,10 +294,6 @@ example_map_reduce_program/
 │   └── client.py
 │
 ├── 📁 xmlrpc_implementation/
-│   ├── server.py
-│   └── client.py
-│
-├── 📁 reqrep_implementation/
 │   ├── server.py
 │   └── client.py
 │

@@ -4,28 +4,8 @@
 Write-Host "Quick Test - All Implementations" -ForegroundColor Green
 Write-Host "=" * 60
 
-# Test 1: Request-Reply (fastest to test)
-Write-Host "`n[1/4] Testing Request-Reply..." -ForegroundColor Yellow
-Write-Host "Starting Request-Reply servers..." -ForegroundColor Cyan
-cd docker
-docker-compose up -d reqrep-server-1 reqrep-server-2 reqrep-server-3
-Start-Sleep -Seconds 5
-
-Write-Host "Running Request-Reply client..." -ForegroundColor Cyan
-docker-compose run --rm reqrep-client
-
-if ($LASTEXITCODE -eq 0) {
-    Write-Host "✓ Request-Reply test passed!" -ForegroundColor Green
-} else {
-    Write-Host "✗ Request-Reply test failed!" -ForegroundColor Red
-}
-
-docker-compose down
-cd ..
-Start-Sleep -Seconds 2
-
-# Test 2: gRPC
-Write-Host "`n[2/4] Testing gRPC..." -ForegroundColor Yellow
+# Test 1: gRPC
+Write-Host "`n[1/3] Testing gRPC..." -ForegroundColor Yellow
 Write-Host "Starting gRPC servers..." -ForegroundColor Cyan
 cd docker
 docker-compose up -d grpc-server-1 grpc-server-2 grpc-server-3
@@ -44,8 +24,8 @@ docker-compose down
 cd ..
 Start-Sleep -Seconds 2
 
-# Test 3: XML-RPC
-Write-Host "`n[3/4] Testing XML-RPC..." -ForegroundColor Yellow
+# Test 2: XML-RPC
+Write-Host "`n[2/3] Testing XML-RPC..." -ForegroundColor Yellow
 Write-Host "Starting XML-RPC servers..." -ForegroundColor Cyan
 cd docker
 docker-compose up -d xmlrpc-server-1 xmlrpc-server-2 xmlrpc-server-3
@@ -64,8 +44,8 @@ docker-compose down
 cd ..
 Start-Sleep -Seconds 2
 
-# Test 4: MPI
-Write-Host "`n[4/4] Testing MPI..." -ForegroundColor Yellow
+# Test 3: MPI
+Write-Host "`n[3/3] Testing MPI..." -ForegroundColor Yellow
 cd docker
 docker-compose run --rm mpi-runner
 
@@ -87,4 +67,4 @@ Write-Host "  python performance_test.py" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "This will test:" -ForegroundColor Yellow
 Write-Host "  - gRPC: Single Machine vs Multiple Containers" -ForegroundColor Cyan
-Write-Host "  - XML-RPC, Request-Reply, and MPI" -ForegroundColor Cyan
+Write-Host "  - XML-RPC and MPI" -ForegroundColor Cyan

@@ -4,7 +4,6 @@
 This project compares the performance of different distributed computing approaches:
 - **gRPC** (Single Machine vs Multiple Containers)
 - XML-RPC
-- Request-Reply (ZeroMQ)
 - MPI (Message Passing Interface)
 
 **Key Feature**: Compares gRPC performance running on a single computer versus multiple containers to demonstrate the trade-offs between local and distributed processing.
@@ -22,15 +21,11 @@ This project compares the performance of different distributed computing approac
 ├── xmlrpc_implementation/
 │   ├── server.py
 │   └── client.py
-├── reqrep_implementation/
-│   ├── server.py
-│   └── client.py
 ├── mpi_implementation/
 │   └── mapreduce.py
 ├── docker/
 │   ├── Dockerfile.grpc
 │   ├── Dockerfile.xmlrpc
-│   ├── Dockerfile.reqrep
 │   ├── Dockerfile.mpi
 │   └── docker-compose.yml
 ├── data/
@@ -38,7 +33,6 @@ This project compares the performance of different distributed computing approac
 ├── performance_test.py
 ├── requirements.txt
 ├── requirements-grpc.txt
-├── requirements-reqrep.txt
 └── requirements-mpi.txt
 ```
 
@@ -75,9 +69,6 @@ This project compares the performance of different distributed computing approac
    # Test XML-RPC
    docker-compose up xmlrpc-client
 
-   # Test Request-Reply
-   docker-compose up reqrep-client
-
    # Test MPI
    docker-compose run --rm mpi-runner
    ```
@@ -94,7 +85,6 @@ This tests:
 - **gRPC Single Machine** - Local process without containers
 - **gRPC Multiple Containers** - Distributed across 3 Docker containers
 - XML-RPC (3 containers)
-- Request-Reply/ZeroMQ (3 containers)
 - MPI (1 container, 3 processes)
 
 ### Expected Output
@@ -109,7 +99,6 @@ Implementation       Mean       Min        Max        Runs
 grpc_single         2.3450     2.2100     2.4500     3         
 grpc_multi          2.6700     2.5200     2.7900     3         
 xmlrpc              3.1200     2.9800     3.2400     3         
-reqrep              2.8900     2.7500     3.0100     3         
 mpi                 3.0100     2.8900     3.1500     3         
 
 ============================================================
