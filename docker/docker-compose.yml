@@ -56,7 +56,7 @@ services:
       - grpc-server-2
       - grpc-server-3
     command: >
-      sh -c "sleep 5 && python grpc_implementation/client.py"
+      sh -c "sleep 5 && python grpc_implementation/client_multi_servers.py"
 
   # XML-RPC Servers (3 containers)
   xmlrpc-server-1:
