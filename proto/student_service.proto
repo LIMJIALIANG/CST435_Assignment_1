@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package student_service;
+
+// Student data structure
+message Student {
+    string student_id = 1;
+    string name = 2;
+    string faculty = 3;
+    double cgpa = 4;
+    string grade = 5;
+}
+
+// MapReduce Request/Response
+message MapReduceRequest {
+    repeated Student students = 1;
+    string operation = 2;  // "cgpa_count" or "grade_count"
+}
+
+message CGPARange {
+    string range = 1;  // e.g., "3.5-4.0"
+    int32 count = 2;
+}
+
+message GradeCount {
+    string grade = 1;
+    int32 count = 2;
+}
+
+message MapReduceResponse {
+    repeated CGPARange cgpa_ranges = 1;
+    repeated GradeCount grade_counts = 2;
+    double processing_time = 3;
+}
+
+// Merge Sort Request/Response
+message MergeSortRequest {
+    repeated Student students = 1;
+    string sort_by = 2;  // "cgpa" or "grade"
+}
+
+message MergeSortResponse {
+    repeated Student sorted_students = 1;
+    double processing_time = 2;
+}
+
+// Statistical Analysis Request/Response
+message StatsRequest {
+    repeated Student students = 1;
+    string analysis_type = 2;  // "avg_cgpa_faculty", "grade_distribution", "pass_rate"
+}
+
+message FacultyStats {
+    string faculty = 1;
+    double average_cgpa = 2;
+    int32 student_count = 3;
+}
+
+message GradeDistribution {
+    string grade = 1;
+    int32 count = 2;
+    double percentage = 3;
+}
+
+message StatsResponse {
+    repeated FacultyStats faculty_stats = 1;
+    repeated GradeDistribution grade_distribution = 2;
+    double pass_rate = 3;
+    double processing_time = 4;
+}
+
+// Service definition
+service StudentAnalysisService {
+    rpc PerformMapReduce(MapReduceRequest) returns (MapReduceResponse);
+    rpc PerformMergeSort(MergeSortRequest) returns (MergeSortResponse);
+    rpc PerformStatisticalAnalysis(StatsRequest) returns (StatsResponse);
+}

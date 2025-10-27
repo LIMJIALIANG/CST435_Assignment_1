@@ -1,0 +1,51 @@
+student_id,name,faculty,cgpa,grade
+S001,Ahmad bin Ali,Engineering,3.85,A
+S002,Siti Nurhaliza,Science,3.92,A
+S003,Lee Wei Ming,Business,2.75,B
+S004,Kumar Shankar,Engineering,3.45,B+
+S005,Fatimah Hassan,Medicine,3.98,A
+S006,Chen Mei Ling,Science,3.22,B+
+S007,Rajesh Kumar,Engineering,2.95,B
+S008,Nur Aisyah,Business,3.67,A-
+S009,Wong Kar Wai,Science,2.45,C+
+S010,Muhammad Rizal,Medicine,3.78,A-
+S011,Tan Bee Lian,Engineering,3.15,B+
+S012,Ibrahim Ismail,Business,2.88,B
+S013,Lim Siew Choo,Science,3.56,A-
+S014,Priya Sharma,Medicine,3.91,A
+S015,Hassan Abdullah,Engineering,2.67,B-
+S016,Nurul Hidayah,Business,3.43,B+
+S017,David Tan,Science,2.34,C+
+S018,Aisha Rahman,Medicine,3.87,A
+S019,Chong Wei Lun,Engineering,3.28,B+
+S020,Zainab Mohamed,Business,2.78,B
+S021,Raj Patel,Science,3.65,A-
+S022,Aminah Yusof,Engineering,3.12,B+
+S023,Lim Boon Hock,Medicine,3.95,A
+S024,Salmah Sulaiman,Business,2.56,C+
+S025,Vijay Singh,Science,3.48,B+
+S026,Nur Hidayah,Engineering,2.91,B
+S027,Tan Ah Kow,Business,3.71,A-
+S028,Rashid Ali,Medicine,3.89,A
+S029,Mei Ling Wong,Science,3.38,B+
+S030,Ali Hassan,Engineering,2.45,C+
+S031,Siti Aishah,Business,3.52,A-
+S032,Kumar Rajan,Science,3.83,A
+S033,Farah Nadia,Medicine,3.77,A-
+S034,Lee Chong Wei,Engineering,2.98,B
+S035,Nora Abdullah,Business,3.25,B+
+S036,Chen Wei Jie,Science,2.67,B-
+S037,Amira Zakaria,Engineering,3.61,A-
+S038,Tan Kian Hock,Medicine,3.94,A
+S039,Nur Azizah,Business,2.82,B
+S040,Krishnan Kumar,Science,3.46,B+
+S041,Zulkifli Mahmud,Engineering,3.19,B+
+S042,Lina Chen,Business,2.73,B
+S043,Azman Ahmad,Medicine,3.86,A
+S044,Siew Peng Tan,Science,3.58,A-
+S045,Hassan Ibrahim,Engineering,2.89,B
+S046,Nurul Izzah,Business,3.34,B+
+S047,Ravi Shankar,Science,2.54,C+
+S048,Fatimah Zahra,Medicine,3.93,A
+S049,Wong Siu Ming,Engineering,3.27,B+
+S050,Aishah Binti Ali,Business,3.69,A-

@@ -1,2 +1,0 @@
-# XML-RPC has no external dependencies (built into Python)
-# No additional packages needed

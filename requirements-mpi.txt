@@ -1,2 +1,0 @@
-# MPI dependencies
-mpi4py==3.1.5

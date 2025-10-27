@@ -23,15 +23,13 @@ wheels/
 .installed.cfg
 *.egg
 
-# gRPC generated files
-grpc_implementation/mapreduce_pb2.py
-grpc_implementation/mapreduce_pb2_grpc.py
+# Generated gRPC files
+server/generated/
+client/generated/
 
-# Performance results
-performance_results/
-
-# Docker
-.dockerignore
+# Results
+results/
+*.json
 
 # IDE
 .vscode/
@@ -43,11 +41,6 @@ performance_results/
 # OS
 .DS_Store
 Thumbs.db
-desktop.ini
 
-# Logs
+# Docker
 *.log
-
-# Temporary files
-*.tmp
-*.bak

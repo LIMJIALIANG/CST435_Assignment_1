@@ -1,126 +1,33 @@
 version: '3.8'
 
 services:
-  # gRPC Servers (3 containers)
-  grpc-server-1:
+  server:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.grpc
-    container_name: grpc-server-1
-    environment:
-      - GRPC_PORT=50051
+      dockerfile: docker/Dockerfile.server
+    container_name: student-analysis-server
     ports:
       - "50051:50051"
     networks:
-      - mapreduce-net
-    command: python grpc_implementation/server.py
+      - student-network
+    environment:
+      - PYTHONUNBUFFERED=1
 
-  grpc-server-2:
+  client:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.grpc
-    container_name: grpc-server-2
-    environment:
-      - GRPC_PORT=50051
-    ports:
-      - "50052:50051"
-    networks:
-      - mapreduce-net
-    command: python grpc_implementation/server.py
-
-  grpc-server-3:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.grpc
-    container_name: grpc-server-3
-    environment:
-      - GRPC_PORT=50051
-    ports:
-      - "50053:50051"
-    networks:
-      - mapreduce-net
-    command: python grpc_implementation/server.py
-
-  # gRPC Client (test)
-  grpc-client:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.grpc
-    container_name: grpc-client
-    environment:
-      - GRPC_SERVERS=grpc-server-1:50051,grpc-server-2:50051,grpc-server-3:50051
-    networks:
-      - mapreduce-net
+      dockerfile: docker/Dockerfile.client
+    container_name: student-analysis-client
     depends_on:
-      - grpc-server-1
-      - grpc-server-2
-      - grpc-server-3
-    command: >
-      sh -c "sleep 5 && python grpc_implementation/client_multi_servers.py"
-
-  # XML-RPC Servers (3 containers)
-  xmlrpc-server-1:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.xmlrpc
-    container_name: xmlrpc-server-1
+      - server
+    networks:
+      - student-network
     environment:
-      - XMLRPC_PORT=8000
-    ports:
-      - "8000:8000"
-    networks:
-      - mapreduce-net
-
-  xmlrpc-server-2:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.xmlrpc
-    container_name: xmlrpc-server-2
-    environment:
-      - XMLRPC_PORT=8000
-    ports:
-      - "8001:8000"
-    networks:
-      - mapreduce-net
-
-  xmlrpc-server-3:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.xmlrpc
-    container_name: xmlrpc-server-3
-    environment:
-      - XMLRPC_PORT=8000
-    ports:
-      - "8002:8000"
-    networks:
-      - mapreduce-net
-
-  # XML-RPC Client (test)
-  xmlrpc-client:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.xmlrpc
-    container_name: xmlrpc-client
-    environment:
-      - XMLRPC_SERVERS=http://xmlrpc-server-1:8000,http://xmlrpc-server-2:8000,http://xmlrpc-server-3:8000
-    networks:
-      - mapreduce-net
-    depends_on:
-      - xmlrpc-server-1
-      - xmlrpc-server-2
-      - xmlrpc-server-3
-    command: >
-      sh -c "sleep 5 && python xmlrpc_implementation/client.py"
-
-  # MPI Container
-  mpi-runner:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.mpi
-    container_name: mpi-runner
-    networks:
-      - mapreduce-net
+      - SERVER_ADDRESS=server:50051
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ../results:/app/results
 
 networks:
-  mapreduce-net:
+  student-network:
     driver: bridge
