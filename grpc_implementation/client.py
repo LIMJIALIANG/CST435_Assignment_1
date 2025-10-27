@@ -28,9 +28,15 @@ class MapReduceClient:
         self.channels = []
         self.stubs = []
         
+        # Configure channel options to handle larger messages (100MB max)
+        options = [
+            ('grpc.max_send_message_length', 100 * 1024 * 1024),  # 100MB
+            ('grpc.max_receive_message_length', 100 * 1024 * 1024),  # 100MB
+        ]
+        
         # Create channels and stubs for each server
         for address in server_addresses:
-            channel = grpc.insecure_channel(address)
+            channel = grpc.insecure_channel(address, options=options)
             stub = mapreduce_pb2_grpc.MapReduceServiceStub(channel)
             self.channels.append(channel)
             self.stubs.append(stub)

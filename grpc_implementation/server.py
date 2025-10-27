@@ -213,7 +213,16 @@ def serve(port=50051):
     """
     Start gRPC server
     """
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    # Configure server options to handle larger messages (100MB max)
+    options = [
+        ('grpc.max_send_message_length', 100 * 1024 * 1024),  # 100MB
+        ('grpc.max_receive_message_length', 100 * 1024 * 1024),  # 100MB
+    ]
+    
+    server = grpc.server(
+        futures.ThreadPoolExecutor(max_workers=10),
+        options=options
+    )
     mapreduce_pb2_grpc.add_MapReduceServiceServicer_to_server(
         MapReduceServicer(), server
     )

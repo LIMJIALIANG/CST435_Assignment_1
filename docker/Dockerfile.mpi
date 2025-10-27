@@ -19,5 +19,6 @@ RUN pip install --no-cache-dir -r requirements-mpi.txt
 COPY mpi_implementation/ ./mpi_implementation/
 COPY data/ ./data/
 
-# Default command (run with 3 processes)
-CMD ["mpiexec", "-n", "3", "--allow-run-as-root", "python", "mpi_implementation/mapreduce.py"]
+# Default command (run client with 3 processes total: 1 master + 2 workers)
+# The client.py will coordinate all processes
+CMD ["mpiexec", "-n", "3", "--allow-run-as-root", "python", "mpi_implementation/client.py"]
