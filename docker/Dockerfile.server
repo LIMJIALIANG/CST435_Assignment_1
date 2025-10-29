@@ -7,19 +7,22 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy server code
-COPY proto/ ./proto/
-COPY server/ ./server/
+# Copy shared services and data
+COPY services/ ./services/
 COPY data/ ./data/
 
+# Copy gRPC implementation
+COPY grpc_implementation/proto/ ./grpc_implementation/proto/
+COPY grpc_implementation/server/ ./grpc_implementation/server/
+
 # Generate gRPC code
-RUN python -m grpc_tools.protoc -I./proto \
-    --python_out=./server/generated \
-    --grpc_python_out=./server/generated \
-    ./proto/student_service.proto
+RUN python -m grpc_tools.protoc -I./grpc_implementation/proto \
+    --python_out=./grpc_implementation/server/generated \
+    --grpc_python_out=./grpc_implementation/server/generated \
+    ./grpc_implementation/proto/student_service.proto
 
 # Expose gRPC port
 EXPOSE 50051
 
 # Run server
-CMD ["python", "server/server.py"]
+CMD ["python", "grpc_implementation/server/server.py"]

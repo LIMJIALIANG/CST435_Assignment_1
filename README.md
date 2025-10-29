@@ -14,28 +14,41 @@ The system uses a client-server architecture with gRPC protocol:
 ## Project Structure
 ```
 .
-├── proto/                  # Protocol Buffer definitions
-│   └── student_service.proto
-├── server/                 # gRPC Server implementation
-│   ├── server.py
-│   ├── services/
-│   │   ├── mapreduce_service.py
-│   │   ├── mergesort_service.py
-│   │   └── stats_service.py
-│   └── generated/         # Generated gRPC code
-├── client/                # gRPC Client implementation
-│   ├── client.py
-│   └── generated/         # Generated gRPC code
-├── data/                  # Sample student data
+📁 CST435_Assignment_1/
+├── 🔧 grpc_implementation/      # gRPC Protocol Implementation
+│   ├── proto/                   # Protocol Buffer definitions
+│   │   └── student_service.proto
+│   ├── server/                  # gRPC Server
+│   │   ├── server.py
+│   │   └── generated/          # Generated gRPC code
+│   ├── client/                  # gRPC Client
+│   │   ├── client.py
+│   │   └── generated/          # Generated gRPC code
+│   ├── run_server.ps1/.bat     # Convenience scripts
+│   └── run_client.ps1/.bat
+│
+├── 🔧 xmlrpc_implementation/    # XML-RPC Protocol Implementation (Future)
+│   ├── server_xmlrpc/          # XML-RPC Server
+│   └── client_xmlrpc/          # XML-RPC Client
+│
+├── 📦 services/                 # Shared Service Implementations
+│   ├── mapreduce_service.py    # MapReduce logic (protocol-independent)
+│   ├── mergesort_service.py    # MergeSort logic (protocol-independent)
+│   └── stats_service.py        # Statistics logic (protocol-independent)
+│
+├── 📊 data/                     # Sample student data
 │   └── students.csv
-├── docker/                # Docker configurations
+│
+├── 🐳 docker/                   # Docker configurations
 │   ├── Dockerfile.server
 │   ├── Dockerfile.client
 │   └── docker-compose.yml
-├── results/               # Performance results
-├── requirements.txt
-└── README.md
+│
+├── 📈 results/                  # Performance results
+├── 📄 requirements.txt
+└── 📖 README.md
 ```
+
 
 ## Features
 - **MapReduce Operations**: Parallel processing of CGPA and grade counting
@@ -62,39 +75,52 @@ python generate_proto.py
 
 ## Usage
 
-### Method 1: Using Convenience Scripts (EASIEST) ⭐
+### Option 1: gRPC Implementation (Primary) ⭐
+
+#### Method 1: Using Convenience Scripts (EASIEST)
 ```powershell
-# Terminal 1: Start server
+# Terminal 1: Start gRPC server
+cd grpc_implementation
 .\run_server.ps1    # or run_server.bat
 
-# Terminal 2: Run client
+# Terminal 2: Run gRPC client
+cd grpc_implementation
 .\run_client.ps1    # or run_client.bat
 ```
 
-### Method 2: Activate Virtual Environment
+#### Method 2: Activate Virtual Environment
 ```powershell
 # Activate virtual environment (once per terminal session)
 .\.venv\Scripts\Activate.ps1
 
-# Terminal 1: Start server
+# Terminal 1: Start gRPC server
+cd grpc_implementation
 python server/server.py
 
-# Terminal 2: Run client
+# Terminal 2: Run gRPC client
+cd grpc_implementation
 python client/client.py
 ```
 
-### Method 3: Using Full Virtual Environment Path
+### Option 2: XML-RPC Implementation (Future)
 ```powershell
-# Terminal 1: Start server
-& ".\.venv\Scripts\python.exe" server/server.py
+# Coming soon - XML-RPC protocol implementation
+cd xmlrpc_implementation
+```
 
-# Terminal 2: Run client
-& ".\.venv\Scripts\python.exe" client/client.py
+### Option 3: Protocol Comparison
+```powershell
+# Compare performance between gRPC and XML-RPC
+python compare_protocols.py
 ```
 
 ## Docker Deployment
 
-### Running with Docker Compose (Same Machine, Different Containers)
+### Method 1: Docker Compose - Local Containers (⚠️ Windows DNS Issue)
+**What it does**: Runs server and client in **separate containers on the same machine** using bridge networking.
+
+**Note**: On Windows Docker Desktop, there's a known DNS resolution issue with bridge networks that may cause connection failures. **For reliable local testing, use native Python execution instead** (see Test 1 below).
+
 ```powershell
 # Navigate to docker directory
 cd docker
@@ -106,28 +132,48 @@ docker-compose up --build
 docker-compose down
 ```
 
-### Running with Docker Swarm (Simulated Different Machines)
+**When to use**: Linux/Mac users, or if you want to test containerization overhead.
+
+---
+
+### Method 2: Docker Swarm - Distributed Orchestration ⭐ (Recommended for Assignment)
+**What it does**: Simulates **containers running on different machines** using overlay networking. This represents a **true distributed system** scenario.
+
+**Why use this**: Demonstrates network overhead and latency when services communicate across different hosts (even though they're on the same physical machine).
+
 ```powershell
-# Initialize Docker Swarm
+# Step 1: Remove any existing bridge networks (important!)
+docker network rm docker_student-network student-analysis_student-network
+
+# Step 2: Initialize Docker Swarm (one-time setup)
 docker swarm init
 
-# Deploy stack
+# Step 3: Build Docker images
 cd docker
-docker stack deploy -c docker-compose.yml student-analysis
+docker-compose build
 
-# Check services
+# Step 4: Deploy stack to Swarm (uses overlay network)
+docker stack deploy -c docker-compose.swarm.yml student-analysis
+
+# Step 5: Check services status
 docker service ls
 
-# View logs
-docker service logs student-analysis_server
-docker service logs student-analysis_client
+# Step 6: View logs
+docker service logs student-analysis_server --tail 50
+docker service logs student-analysis_client --tail 50
 
-# Remove stack
+# Step 7: Check service tasks (verify completion)
+docker service ps student-analysis_client
+
+# Cleanup: Remove stack
 docker stack rm student-analysis
 
-# Leave swarm
+# Optional: Leave swarm mode
 docker swarm leave --force
 ```
+
+**Performance Note**: Swarm uses overlay networking which adds realistic network latency, simulating communication between different physical machines.
+
 
 ## Performance Testing
 
@@ -137,9 +183,11 @@ docker swarm leave --force
 Run server and client directly on your machine using virtual environment:
 ```powershell
 # Terminal 1
+cd grpc_implementation
 .\run_server.ps1
 
 # Terminal 2
+cd grpc_implementation
 .\run_client.ps1
 ```
 **Expected Results**: Lowest latency, baseline performance
@@ -151,15 +199,20 @@ cd docker
 docker-compose up --build
 ```
 **Expected Results**: Slight overhead from containerization and virtual networking
+**Note**: May have DNS issues on Windows. Use Swarm instead for distributed testing.
 
-#### Test 3: Docker Swarm (Simulated Different Machines)
-Deploy using Docker Swarm:
+#### Test 3: Docker Swarm (Simulated Different Machines) ⭐ Recommended
+Deploy using Docker Swarm with overlay networking:
 ```powershell
+# Remove old networks first
+docker network rm docker_student-network student-analysis_student-network 2>$null
+
 docker swarm init
 cd docker
-docker stack deploy -c docker-compose.yml student-analysis
+docker-compose build
+docker stack deploy -c docker-compose.swarm.yml student-analysis
 ```
-**Expected Results**: Additional network overhead, most realistic distributed scenario
+**Expected Results**: Additional network overhead from overlay networking, most realistic distributed scenario. Shows communication latency between "different machines".
 
 ### Performance Metrics
 The client automatically measures and records:

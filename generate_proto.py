@@ -11,11 +11,11 @@ import sys
 def generate_grpc_code():
     """Generate gRPC Python code from proto files"""
     
-    # Paths
-    proto_dir = "proto"
+    # Paths - updated for new folder structure
+    proto_dir = "grpc_implementation/proto"
     proto_file = "student_service.proto"
-    server_output = "server/generated"
-    client_output = "client/generated"
+    server_output = "grpc_implementation/server/generated"
+    client_output = "grpc_implementation/client/generated"
     
     # Create output directories
     os.makedirs(server_output, exist_ok=True)
@@ -47,8 +47,9 @@ def generate_grpc_code():
     print(f"Server files: {server_output}/")
     print(f"Client files: {client_output}/")
     print("\nYou can now run:")
-    print("  python server/server.py  (in one terminal)")
-    print("  python client/client.py  (in another terminal)")
+    print("  cd grpc_implementation")
+    print("  .\\run_server.ps1  (in one terminal)")
+    print("  .\\run_client.ps1  (in another terminal)")
 
 
 if __name__ == "__main__":

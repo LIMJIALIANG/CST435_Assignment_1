@@ -9,14 +9,20 @@ import grpc
 from concurrent import futures
 import time
 
+# Add project root to path for shared services
+current_dir = os.path.dirname(os.path.abspath(__file__))
+grpc_impl_dir = os.path.dirname(current_dir)
+project_root = os.path.dirname(grpc_impl_dir)
+sys.path.insert(0, project_root)
+
 # Add paths for generated code
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'generated'))
+sys.path.insert(0, os.path.join(current_dir, 'generated'))
 
 # Import generated gRPC code
 import student_service_pb2
 import student_service_pb2_grpc
 
-# Import service implementations
+# Import service implementations from shared services folder
 from services.mapreduce_service import MapReduceService
 from services.mergesort_service import MergeSortService
 from services.stats_service import StatsService

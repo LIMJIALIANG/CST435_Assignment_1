@@ -215,7 +215,13 @@ class StudentAnalysisClient:
     
     def save_performance_metrics(self, filename='results/performance_metrics.json'):
         """Save performance metrics to JSON file"""
-        os.makedirs(os.path.dirname(filename), exist_ok=True)
+        # Navigate to project root to save results
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        grpc_impl_dir = os.path.dirname(current_dir)
+        project_root = os.path.dirname(grpc_impl_dir)
+        full_path = os.path.join(project_root, filename)
+        
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
         metrics_data = {
             'timestamp': datetime.now().isoformat(),
@@ -229,8 +235,10 @@ class StudentAnalysisClient:
             }
         }
         
-        with open(filename, 'w') as f:
+        with open(full_path, 'w') as f:
             json.dump(metrics_data, f, indent=2)
+        
+        print(f"[Client] Performance metrics saved to: {full_path}")
         
         print(f"\n[Client] Performance metrics saved to {filename}")
         print(f"\nPerformance Summary:")
@@ -249,9 +257,10 @@ def main():
     # Determine server address
     server_address = os.getenv('SERVER_ADDRESS', 'localhost:50051')
     
-    # Get data file path
+    # Get data file path - navigate to project root (2 levels up)
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.dirname(current_dir)
+    grpc_impl_dir = os.path.dirname(current_dir)
+    project_root = os.path.dirname(grpc_impl_dir)
     csv_path = os.path.join(project_root, 'data', 'students.csv')
     
     # Initialize client
