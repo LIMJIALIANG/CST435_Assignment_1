@@ -27,7 +27,7 @@ Write-Host ""
 Write-Host "Step 2: Building Docker images..." -ForegroundColor Yellow
 Write-Host "This may take a few minutes..." -ForegroundColor Gray
 Set-Location $PSScriptRoot
-docker-compose build
+docker-compose -f docker-compose.grpc.yml build
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✓ Docker images built successfully" -ForegroundColor Green
 } else {
@@ -38,7 +38,7 @@ Write-Host ""
 
 # Step 3: Deploy stack to Swarm
 Write-Host "Step 3: Deploying stack to Docker Swarm..." -ForegroundColor Yellow
-docker stack deploy -c docker-compose.swarm.yml student-analysis
+docker stack deploy -c docker-compose.grpc.swarm.yml student-analysis
 if ($LASTEXITCODE -eq 0) {
     Write-Host "✓ Stack deployed successfully" -ForegroundColor Green
 } else {

@@ -27,6 +27,7 @@ services:
         target: /app/results
     environment:
       - SERVER_ADDRESS=server:50051
+      - OUTPUT_FILE=grpc_swarm_performance_metrics.json
       - PYTHONUNBUFFERED=1
     deploy:
       replicas: 1

@@ -102,3 +102,71 @@ class StatsService:
         
         result['processing_time'] = processing_time
         return result
+    
+    @staticmethod
+    def calculate_statistics(students):
+        """
+        Comprehensive statistical analysis wrapper
+        Calculates mean, median, std dev, and distributions
+        
+        Args:
+            students: List of student objects
+        
+        Returns:
+            Dictionary with statistics and processing_time
+        """
+        start_time = time.time()
+        
+        if not students:
+            return {
+                'statistics': {},
+                'processing_time': 0.0
+            }
+        
+        # Calculate CGPA statistics
+        cgpas = [s.cgpa for s in students]
+        cgpas_sorted = sorted(cgpas)
+        n = len(cgpas)
+        
+        mean_cgpa = sum(cgpas) / n
+        median_cgpa = cgpas_sorted[n // 2] if n % 2 == 1 else (cgpas_sorted[n // 2 - 1] + cgpas_sorted[n // 2]) / 2
+        
+        # Standard deviation
+        variance = sum((x - mean_cgpa) ** 2 for x in cgpas) / n
+        std_dev = variance ** 0.5
+        
+        # Faculty distribution
+        faculty_counts = defaultdict(int)
+        for student in students:
+            faculty_counts[student.faculty] += 1
+        
+        # Grade distribution
+        grade_counts = defaultdict(int)
+        for student in students:
+            grade_counts[student.grade] += 1
+        
+        processing_time = time.time() - start_time
+        
+        print(f"[Statistics] Comprehensive analysis")
+        print(f"[Statistics] Analyzed {len(students)} students")
+        print(f"[Statistics] Mean CGPA: {mean_cgpa:.4f}")
+        print(f"[Statistics] Processing time: {processing_time:.4f} seconds")
+        
+        return {
+            'statistics': {
+                'cgpa': {
+                    'mean': mean_cgpa,
+                    'median': median_cgpa,
+                    'std_dev': std_dev,
+                    'min': min(cgpas),
+                    'max': max(cgpas)
+                },
+                'distribution': {
+                    'total_students': len(students),
+                    'total_faculties': len(faculty_counts),
+                    'by_faculty': dict(faculty_counts),
+                    'by_grade': dict(grade_counts)
+                }
+            },
+            'processing_time': processing_time
+        }

@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  xmlrpc-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.xmlrpc.server
+    container_name: xmlrpc-server
+    ports:
+      - "8000:8000"
+    networks:
+      - student-network
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import xmlrpc.client; xmlrpc.client.ServerProxy(\"http://localhost:8000\").system.listMethods()' || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  xmlrpc-client:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.xmlrpc.client
+    container_name: xmlrpc-client
+    depends_on:
+      xmlrpc-server:
+        condition: service_healthy
+    networks:
+      - student-network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - SERVER_ADDRESS=http://xmlrpc-server:8000
+      - OUTPUT_FILE=/app/results/xmlrpc_docker_performance_metrics.json
+    volumes:
+      - ../results:/app/results
+    command: ["python", "client.py"]
+
+networks:
+  student-network:
+    driver: bridge

@@ -42,6 +42,22 @@ class MergeSortService:
                 else:
                     result.append(right[j])
                     j += 1
+            elif sort_by == "name":
+                # Sort by name alphabetically ascending
+                if left[i].name.lower() <= right[j].name.lower():
+                    result.append(left[i])
+                    i += 1
+                else:
+                    result.append(right[j])
+                    j += 1
+            else:
+                # Default: sort by CGPA
+                if left[i].cgpa >= right[j].cgpa:
+                    result.append(left[i])
+                    i += 1
+                else:
+                    result.append(right[j])
+                    j += 1
         
         result.extend(left[i:])
         result.extend(right[j:])

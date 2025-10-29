@@ -4,7 +4,7 @@ services:
   server:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.server
+      dockerfile: docker/Dockerfile.grpc.server
     container_name: student-analysis-server
     ports:
       - "50051:50051"
@@ -16,7 +16,7 @@ services:
   client:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.client
+      dockerfile: docker/Dockerfile.grpc.client
     container_name: student-analysis-client
     depends_on:
       - server
@@ -24,6 +24,7 @@ services:
       - student-network
     environment:
       - SERVER_ADDRESS=server:50051
+      - OUTPUT_FILE=grpc_docker_performance_metrics.json
       - PYTHONUNBUFFERED=1
     volumes:
       - ../results:/app/results

@@ -213,39 +213,33 @@ class StudentAnalysisClient:
             print(f"[Client] RPC Error: {e.code()} - {e.details()}")
             return None
     
-    def save_performance_metrics(self, filename='results/performance_metrics.json'):
+    def save_performance_metrics(self, output_path):
         """Save performance metrics to JSON file"""
-        # Navigate to project root to save results
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        grpc_impl_dir = os.path.dirname(current_dir)
-        project_root = os.path.dirname(grpc_impl_dir)
-        full_path = os.path.join(project_root, filename)
-        
-        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
         
         metrics_data = {
             'timestamp': datetime.now().isoformat(),
+            'protocol': 'gRPC',
             'server_address': self.server_address,
-            'metrics': self.performance_metrics,
             'summary': {
                 'total_requests': len(self.performance_metrics),
                 'avg_server_time': sum(m['server_time'] for m in self.performance_metrics) / len(self.performance_metrics) if self.performance_metrics else 0,
                 'avg_total_time': sum(m['total_time'] for m in self.performance_metrics) / len(self.performance_metrics) if self.performance_metrics else 0,
                 'avg_network_overhead': sum(m['network_overhead'] for m in self.performance_metrics) / len(self.performance_metrics) if self.performance_metrics else 0,
-            }
+            },
+            'detailed_metrics': self.performance_metrics
         }
         
-        with open(full_path, 'w') as f:
+        with open(output_path, 'w') as f:
             json.dump(metrics_data, f, indent=2)
         
-        print(f"[Client] Performance metrics saved to: {full_path}")
-        
-        print(f"\n[Client] Performance metrics saved to {filename}")
+        print(f"\n[Client] Performance metrics saved to: {output_path}")
         print(f"\nPerformance Summary:")
         print(f"  Total requests: {metrics_data['summary']['total_requests']}")
         print(f"  Average server processing time: {metrics_data['summary']['avg_server_time']:.4f} seconds")
         print(f"  Average total request time: {metrics_data['summary']['avg_total_time']:.4f} seconds")
         print(f"  Average network overhead: {metrics_data['summary']['avg_network_overhead']:.4f} seconds")
+
 
 
 def main():
@@ -256,6 +250,9 @@ def main():
     
     # Determine server address
     server_address = os.getenv('SERVER_ADDRESS', 'localhost:50051')
+    
+    # Get output filename from environment variable or use default
+    output_filename = os.getenv('OUTPUT_FILE', 'grpc_performance_metrics.json')
     
     # Get data file path - navigate to project root (2 levels up)
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -301,8 +298,18 @@ def main():
         # 5. Statistics - All analysis
         client.call_statistics(students, "all")
         
+        # Determine output path
+        results_dir = os.path.join(project_root, 'results')
+        os.makedirs(results_dir, exist_ok=True)
+        
+        # Use environment variable for output path if it's an absolute path
+        if os.path.isabs(output_filename):
+            output_path = output_filename
+        else:
+            output_path = os.path.join(results_dir, output_filename)
+        
         # Save performance metrics
-        client.save_performance_metrics()
+        client.save_performance_metrics(output_path)
         
     except Exception as e:
         print(f"[Client] Error: {str(e)}")
