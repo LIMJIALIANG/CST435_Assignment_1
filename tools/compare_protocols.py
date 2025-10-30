@@ -133,8 +133,9 @@ class ProtocolComparator:
         print("DETAILED SERVICE-BY-SERVICE COMPARISON")
         print("="*80)
         
-        grpc_details = self.grpc_metrics['detailed_metrics']
-        xmlrpc_details = self.xmlrpc_metrics['detailed_metrics']
+        # Support both 'detailed_metrics' and 'metrics' keys for backward compatibility
+        grpc_details = self.grpc_metrics.get('detailed_metrics') or self.grpc_metrics.get('metrics', [])
+        xmlrpc_details = self.xmlrpc_metrics.get('detailed_metrics') or self.xmlrpc_metrics.get('metrics', [])
         
         # Group by service
         services = {}
