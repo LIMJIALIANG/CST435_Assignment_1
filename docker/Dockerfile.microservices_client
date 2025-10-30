@@ -1,0 +1,24 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY services/ ./services/
+COPY data/ ./data/
+COPY grpc_implementation/proto/ ./grpc_implementation/proto/
+COPY generate_proto.py .
+
+RUN python generate_proto.py
+
+COPY grpc_implementation/client/microservices_client.py ./grpc_implementation/client/
+
+RUN mkdir -p grpc_implementation/client/generated && \
+    cp grpc_implementation/client/generated/*.py grpc_implementation/client/generated/ || true
+
+ENV SERVICE_A_ADDRESS=service-a:50051
+ENV OUTPUT_FILE=/app/results/microservices_docker_performance_metrics.json
+
+# Wait for services to be ready, then run client
+CMD sleep 10 && python grpc_implementation/client/microservices_client.py

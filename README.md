@@ -1,46 +1,67 @@
 # CST435 Assignment 1 - Student Marks Analysis with RPC Protocols
 
 ## Problem Statement
-This project implements a distributed student marks analysis system using **gRPC and XML-RPC** protocols for comparison. The system performs:
+This project implements a distributed student marks analysis system using **gRPC microservices architecture** and **XML-RPC** for protocol comparison. The system performs:
 1. **MapReduce**: Count CGPA ranges and grade distributions
 2. **Merge Sort**: Rank students by grades
 3. **Statistical Analysis**: Calculate average CGPA per faculty, grade distribution, and pass rates
 4. **Protocol Comparison**: Performance analysis between gRPC (binary) and XML-RPC (text-based)
 
 ## Architecture
-The system uses a client-server architecture with **two protocol implementations**:
 
-### gRPC Implementation (Binary Protocol)
-- **Protocol**: gRPC with Protocol Buffers
-- **Serialization**: Binary (compact, fast)
-- **Transport**: HTTP/2
-- **Port**: 50051
-- **Use Case**: High-performance, production systems
+### gRPC Microservices Architecture (Service Chaining) ⭐
+The gRPC implementation uses a **microservices architecture with service chaining**, where each service performs a specific task and forwards the request to the next service:
+
+```
+Client → Service A → Service B → Service C → Service D → Service E → Client
+         (MapReduce  (MapReduce  (MergeSort  (MergeSort  (Statistics)
+          CGPA)       Grade)      CGPA)       Grade)
+```
+
+**Service Chain Details:**
+- **Service A** (Port 50051): MapReduce CGPA counting → forwards to Service B
+- **Service B** (Port 50052): MapReduce Grade distribution → forwards to Service C
+- **Service C** (Port 50053): MergeSort by CGPA → forwards to Service D
+- **Service D** (Port 50054): MergeSort by Grade → forwards to Service E
+- **Service E** (Port 50055): Statistical Analysis → returns aggregated results to client
+
+**Key Features:**
+- Each service is an independent server on a different port
+- Services communicate via gRPC (Protocol Buffers)
+- Data flows through the entire chain: Client calls Service A, which calls Service B, and so on
+- **Result Aggregation**: Each service accumulates results and forwards them downstream
+- **Complete Results**: Client receives results from all 5 services in a single response
+- Simulates distributed containers across multiple servers
+- Performance metrics captured for each service and end-to-end workflow
 
 ### XML-RPC Implementation (Text Protocol)
 - **Protocol**: XML-RPC
 - **Serialization**: XML (human-readable, verbose)
 - **Transport**: HTTP/1.1
 - **Port**: 8000
-- **Use Case**: Legacy systems, simple integrations
-
-Both implementations use the **same shared business logic** (services folder) to ensure fair comparison.
+- **Use Case**: Legacy systems, simple integrations, protocol comparison
 
 ## Project Structure
 ```
 .
 📁 CST435_Assignment_1/
-├── 🔧 grpc_implementation/      # gRPC Protocol Implementation
+├── 🔧 grpc_implementation/      # gRPC Microservices Implementation
 │   ├── proto/                   # Protocol Buffer definitions
 │   │   └── student_service.proto
-│   ├── server/                  # gRPC Server
-│   │   ├── server.py
-│   │   └── generated/          # Generated gRPC code
-│   ├── client/                  # gRPC Client
-│   │   ├── client.py
-│   │   └── generated/          # Generated gRPC code
-│   ├── run_server.ps1/.bat     # Convenience scripts
-│   └── run_client.ps1/.bat
+│   │
+│   ├── server/                  # Microservices (A, B, C, D, E)
+│   │   ├── service_a_mapreduce_cgpa.py    # Service A (Port 50051)
+│   │   ├── service_b_mapreduce_grade.py   # Service B (Port 50052)
+│   │   ├── service_c_mergesort_cgpa.py    # Service C (Port 50053)
+│   │   ├── service_d_mergesort_grade.py   # Service D (Port 50054)
+│   │   ├── service_e_statistics.py        # Service E (Port 50055)
+│   │   ├── start_all_services.ps1/.bat    # Launch all services
+│   │   └── generated/                     # Generated gRPC code
+│   │
+│   └── client/                  # Microservices Client
+│       ├── microservices_client.py        # Initiates workflow at Service A
+│       ├── run_client.ps1/.bat            # Run client script
+│       └── generated/                     # Generated gRPC code
 │
 ├── 🔧 xmlrpc_implementation/    # XML-RPC Protocol Implementation
 │   ├── server/                  # XML-RPC Server
@@ -59,14 +80,17 @@ Both implementations use the **same shared business logic** (services folder) to
 │   └── students.csv
 │
 ├── 🐳 docker/                   # Docker configurations
-│   ├── Dockerfile.grpc.server         # gRPC server container
-│   ├── Dockerfile.grpc.client         # gRPC client container
-│   ├── docker-compose.grpc.yml        # gRPC Docker Compose
-│   ├── docker-compose.grpc.swarm.yml  # gRPC Docker Swarm
-│   ├── Dockerfile.xmlrpc.server       # XML-RPC server container
-│   ├── Dockerfile.xmlrpc.client       # XML-RPC client container
-│   ├── docker-compose.xmlrpc.yml      # XML-RPC Docker Compose
-│   └── docker-compose.xmlrpc.swarm.yml # XML-RPC Docker Swarm
+│   ├── Dockerfile.service_a              # Service A container
+│   ├── Dockerfile.service_b              # Service B container
+│   ├── Dockerfile.service_c              # Service C container
+│   ├── Dockerfile.service_d              # Service D container
+│   ├── Dockerfile.service_e              # Service E container
+│   ├── Dockerfile.microservices_client   # Microservices client
+│   ├── docker-compose.microservices.yml  # Docker Compose config
+│   │
+│   ├── Dockerfile.xmlrpc.server          # XML-RPC server container
+│   ├── Dockerfile.xmlrpc.client          # XML-RPC client container
+│   └── docker-compose.xmlrpc.yml         # XML-RPC Docker Compose
 │
 ├── 🔧 tools/                    # Analysis and comparison tools
 │   └── compare_protocols.py     # Compare gRPC vs XML-RPC performance
@@ -78,11 +102,15 @@ Both implementations use the **same shared business logic** (services folder) to
 
 
 ## Features
+- **Microservices Architecture**: 5 independent services simulating distributed containers
+- **Service Chaining with Result Aggregation**: Data and results flow sequentially A → B → C → D → E
+- **Complete Result Visibility**: Client receives aggregated results from all 5 services
 - **MapReduce Operations**: Parallel processing of CGPA and grade counting
 - **Merge Sort**: Distributed sorting for student rankings
 - **Statistical Analysis**: Grade distribution, pass rates, average CGPA per faculty
-- **Performance Metrics**: Timing measurements for same-machine vs different-machine setups
-- **Docker Support**: Containerization for easy deployment and testing
+- **Detailed Performance Metrics**: Individual service times, total processing time, network overhead
+- **Two Deployment Methods**: Native Python, Docker Compose
+- **Protocol Comparison**: Compare gRPC microservices vs XML-RPC monolithic
 
 ## Installation
 
@@ -100,36 +128,79 @@ pip install -r requirements.txt
 python generate_proto.py
 ```
 
-## Usage
+## Usage - gRPC Microservices
 
-### Option 1: gRPC Implementation (Primary) ⭐
+The gRPC implementation offers **two deployment methods** to test different scenarios:
 
-#### Method 1: Using Convenience Scripts (EASIEST)
+### Method 1: Native Python (Convenience Scripts) ⭐ EASIEST
+
+This method runs all 5 services locally on different ports, simulating distributed containers.
+
 ```powershell
-# Terminal 1: Start gRPC server
-cd grpc_implementation
-.\run_server.ps1    # or run_server.bat
+# Terminal 1: Start all 5 microservices
+cd grpc_implementation\server
+.\start_all_services.ps1    # or start_all_services.bat
 
-# Terminal 2: Run gRPC client
-cd grpc_implementation
+# This will open 5 terminal windows:
+# - Service A: localhost:50051 (MapReduce CGPA)
+# - Service B: localhost:50052 (MapReduce Grade)
+# - Service C: localhost:50053 (MergeSort CGPA)
+# - Service D: localhost:50054 (MergeSort Grade)
+# - Service E: localhost:50055 (Statistics)
+
+# Terminal 2: Run the microservices client
+cd grpc_implementation\client
 .\run_client.ps1    # or run_client.bat
+
+# Results saved to: results/grpc_performance_metrics.json
 ```
 
-#### Method 2: Activate Virtual Environment
+**What happens:**
+1. Client calls Service A with the initial request
+2. Service A processes MapReduce CGPA → forwards accumulated results to Service B
+3. Service B processes MapReduce Grade → forwards accumulated results to Service C
+4. Service C processes MergeSort CGPA → forwards accumulated results to Service D
+5. Service D processes MergeSort Grade → forwards accumulated results to Service E
+6. Service E processes Statistics → returns **complete aggregated results** from all services
+7. Client displays results from all 5 services and measures performance metrics
+
+**Results displayed:**
+- Service A: CGPA count by ranges
+- Service B: Grade distribution
+- Service C: Top students sorted by CGPA
+- Service D: Top students sorted by grade
+- Service E: Statistical analysis (pass rate, faculty averages)
+- Performance: Individual service times + total workflow time + network overhead
+
+---
+
+### Method 2: Docker Compose (Containerized) 🐳
+
+This method runs all 5 services in separate Docker containers with bridge networking.
+
 ```powershell
-# Activate virtual environment (once per terminal session)
-.\.venv\Scripts\Activate.ps1
+cd docker
 
-# Terminal 1: Start gRPC server
-cd grpc_implementation
-python server/server.py
+# Build and run all microservices + client
+docker-compose -f docker-compose.microservices.yml up --build
 
-# Terminal 2: Run gRPC client
-cd grpc_implementation
-python client/client.py
+# Results saved to: results/microservices_docker_performance_metrics.json
+
+# To stop and remove containers:
+docker-compose -f docker-compose.microservices.yml down
 ```
 
-### Option 2: XML-RPC Implementation 🆕
+**Container architecture:**
+- 5 service containers (service-a, service-b, service-c, service-d, service-e)
+- 1 client container
+- Bridge network for inter-service communication
+- Environment variables for service addresses
+
+---
+
+## Usage - XML-RPC Implementation
+
+The XML-RPC implementation maintains a monolithic server-client architecture for comparison.
 
 #### Method 1: Using Convenience Scripts (EASIEST)
 ```powershell
@@ -156,8 +227,12 @@ cd xmlrpc_implementation\client
 python client.py
 ```
 
-### Option 3: Protocol Comparison 📊
-After running both gRPC and XML-RPC clients, compare their performance:
+---
+
+## Protocol Comparison 📊
+
+After running both gRPC microservices and XML-RPC implementations, compare their performance:
+
 ```powershell
 # Activate virtual environment
 .\.venv\Scripts\Activate.ps1
@@ -166,97 +241,32 @@ After running both gRPC and XML-RPC clients, compare their performance:
 python tools\compare_protocols.py
 ```
 
-This will generate:
+**Generates:**
 - **Console output**: Detailed comparison tables
 - **Charts**: Visual performance comparisons (PNG files)
-- **Reports**: Text reports with analysis and recommendations
+- **Reports**: Analysis of latency, throughput, and overhead
 
-## Docker Deployment
-
-Both gRPC and XML-RPC support Docker deployment with identical configurations.
-
-### Method 1: Docker Compose - Local Containers
-
-#### gRPC Deployment
-```powershell
-cd docker
-docker-compose -f docker-compose.grpc.yml up --build
-# Results saved to: results/grpc_docker_performance_metrics.json
-```
-
-#### XML-RPC Deployment
-```powershell
-cd docker
-docker-compose -f docker-compose.xmlrpc.yml up --build
-# Results saved to: results/xmlrpc_docker_performance_metrics.json
-```
-
-**Note**: Windows Docker Desktop may have DNS issues with bridge networks. Use Swarm for distributed testing.
+**Comparison aspects:**
+- Serialization format (Binary vs XML)
+- Network overhead
+- Latency per operation
+- End-to-end workflow time
+- Architecture complexity (Microservices with chaining vs Monolithic)
+- Result aggregation in microservices vs single response in monolithic
 
 ---
 
-### Method 2: Docker Swarm - Distributed Orchestration ⭐ (Recommended)
+## Performance Testing Scenarios
 
-**What it does**: Simulates containers running on **different machines** using overlay networking.
+### Test 1: Native Python (Same Machine) - Baseline
 
-#### gRPC Swarm Deployment
+**gRPC Microservices:**
 ```powershell
-# Initialize Swarm (one-time)
-docker swarm init
-
-# Build and deploy gRPC
-cd docker
-docker-compose -f docker-compose.grpc.yml build
-docker stack deploy -c docker-compose.grpc.swarm.yml student-analysis
-
-# View logs
-docker service logs student-analysis_server --tail 50
-docker service logs student-analysis_client --tail 50
-
-# Results saved to: results/grpc_swarm_performance_metrics.json
-
-# Cleanup
-docker stack rm student-analysis
-```
-
-#### XML-RPC Swarm Deployment
-```powershell
-# Build and deploy XML-RPC
-cd docker
-docker-compose -f docker-compose.xmlrpc.yml build
-docker stack deploy -c docker-compose.xmlrpc.swarm.yml xmlrpc-analysis
-
-# View logs
-docker service logs xmlrpc-analysis_xmlrpc-server --tail 50
-docker service logs xmlrpc-analysis_xmlrpc-client --tail 50
-
-# Results saved to: results/xmlrpc_swarm_performance_metrics.json
-
-# Cleanup
-docker stack rm xmlrpc-analysis
-```
-
-#### Compare Both Protocols in Swarm
-```powershell
-# After running both deployments, compare results
-python tools\compare_protocols.py
-```
-
-
-## Performance Testing & Comparison
-
-### Test Scenarios
-
-#### Test 1: Native Python (Same Machine) - Baseline
-Run each protocol natively for baseline performance:
-
-**gRPC:**
-```powershell
-# Terminal 1: gRPC Server
+# Terminal 1: Start all services
 cd grpc_implementation\server
-.\run_server.ps1
+.\start_all_services.ps1
 
-# Terminal 2: gRPC Client
+# Terminal 2: Run client
 cd grpc_implementation\client
 .\run_client.ps1
 ```
@@ -264,29 +274,28 @@ Results: `results/grpc_performance_metrics.json`
 
 **XML-RPC:**
 ```powershell
-# Terminal 1: XML-RPC Server
+# Terminal 1: Start server
 cd xmlrpc_implementation
 .\run_server.ps1
 
-# Terminal 2: XML-RPC Client
+# Terminal 2: Run client
 cd xmlrpc_implementation
 .\run_client.ps1
 ```
 Results: `results/xmlrpc_performance_metrics.json`
 
-**Expected**: Lowest latency, baseline for each protocol
+**Expected**: Lowest latency baseline for each protocol
 
 ---
 
-#### Test 2: Docker Compose (Containerized, Same Machine)
-Run both protocols in Docker containers:
+### Test 2: Docker Compose (Containerized, Same Machine)
 
-**gRPC:**
+**gRPC Microservices:**
 ```powershell
 cd docker
-docker-compose -f docker-compose.grpc.yml up --build
+docker-compose -f docker-compose.microservices.yml up --build
 ```
-Results: `results/grpc_docker_performance_metrics.json`
+Results: `results/microservices_docker_performance_metrics.json`
 
 **XML-RPC:**
 ```powershell
@@ -295,31 +304,7 @@ docker-compose -f docker-compose.xmlrpc.yml up --build
 ```
 Results: `results/xmlrpc_docker_performance_metrics.json`
 
-**Expected**: Containerization overhead added
-
----
-
-#### Test 3: Docker Swarm (Distributed Simulation) ⭐ Recommended
-Simulate distributed systems with overlay networking:
-
-**gRPC:**
-```powershell
-docker swarm init
-cd docker
-docker-compose -f docker-compose.grpc.yml build
-docker stack deploy -c docker-compose.grpc.swarm.yml student-analysis
-```
-Results: `results/grpc_swarm_performance_metrics.json`
-
-**XML-RPC:**
-```powershell
-cd docker
-docker-compose -f docker-compose.xmlrpc.yml build
-docker stack deploy -c docker-compose.xmlrpc.swarm.yml xmlrpc-analysis
-```
-Results: `results/xmlrpc_swarm_performance_metrics.json`
-
-**Expected**: Realistic network overhead from overlay networking
+**Expected**: Added containerization overhead
 
 ---
 
@@ -340,19 +325,24 @@ python tools\compare_protocols.py
 2. **Charts**: 
    - `native_comparison.png` - Native execution comparison
    - `docker_comparison.png` - Docker comparison
-   - `swarm_comparison.png` - Swarm comparison
 3. **Reports**:
    - `native_comparison_report.txt`
    - `docker_comparison_report.txt`
-   - `swarm_comparison_report.txt`
 
 ### Key Performance Metrics
 
-Each test measures:
+**gRPC Microservices measures:**
+- **Individual Service Times**: Processing time for each service (A, B, C, D, E)
+- **Total Processing Time**: Sum of all service processing times
+- **End-to-End Time**: Complete workflow time including network calls
+- **Network Overhead**: Inter-service communication overhead
+- **Result Aggregation**: Time to combine results from all services
+
+**XML-RPC Monolithic measures:**
 - **Server Processing Time**: Pure computation time
 - **Total Request Time**: End-to-end including network
 - **Network Overhead**: Serialization + transmission time
-- **Protocol Efficiency**: gRPC (binary) vs XML-RPC (text)
+- **Protocol Efficiency**: Binary vs text-based serialization
 
 ### Expected Performance Characteristics
 
@@ -376,22 +366,24 @@ Results are saved in `results/performance_metrics.json`
 
 ### Sample Performance Results
 
-**gRPC Metrics:**
+**gRPC Microservices Metrics:**
 ```json
 {
   "timestamp": "2025-10-30T...",
-  "protocol": "gRPC",
-  "server_address": "localhost:50051",
-  "summary": {
-    "total_requests": 5,
-    "avg_server_time": 0.0021,
-    "avg_total_time": 0.0067,
-    "avg_network_overhead": 0.0046
-  }
+  "architecture": "microservices_chained",
+  "workflow": "Client → A → B → C → D → E → Client",
+  "workflow_time": 0.1284,
+  "service_a_time": 0.0065,
+  "service_b_time": 0.0047,
+  "service_c_time": 0.0002,
+  "service_d_time": 0.0002,
+  "service_e_time": 0.0002,
+  "total_processing_time": 0.0118,
+  "network_overhead": 0.1166
 }
 ```
 
-**XML-RPC Metrics:**
+**XML-RPC Monolithic Metrics:**
 ```json
 {
   "timestamp": "2025-10-30T...",
@@ -407,17 +399,22 @@ Results are saved in `results/performance_metrics.json`
 ```
 
 **Comparison Summary:**
-- gRPC is typically **20-40% faster** than XML-RPC
-- Binary serialization reduces message size significantly
-- Network overhead is lower with Protocol Buffers
-- XML-RPC is more verbose but easier to debug
+- gRPC microservices show **distributed processing** across 5 services
+- Each service's contribution to total time is visible
+- Network overhead in microservices includes inter-service communication
+- XML-RPC monolithic has simpler metrics but less visibility into operations
+- Binary serialization (gRPC) vs text (XML-RPC) affects message sizes
 
 ## Project Files
 
-### gRPC Implementation
-- `grpc_implementation/proto/student_service.proto` - Protocol Buffer definitions
-- `grpc_implementation/server/server.py` - gRPC server
-- `grpc_implementation/client/client.py` - gRPC client
+### gRPC Microservices Implementation
+- `grpc_implementation/proto/student_service.proto` - Protocol Buffer definitions with CombinedResponse
+- `grpc_implementation/server/service_a_mapreduce_cgpa.py` - Service A (MapReduce CGPA)
+- `grpc_implementation/server/service_b_mapreduce_grade.py` - Service B (MapReduce Grade)
+- `grpc_implementation/server/service_c_mergesort_cgpa.py` - Service C (MergeSort CGPA)
+- `grpc_implementation/server/service_d_mergesort_grade.py` - Service D (MergeSort Grade)
+- `grpc_implementation/server/service_e_statistics.py` - Service E (Statistics)
+- `grpc_implementation/client/microservices_client.py` - Microservices client
 - `generate_proto.py` - Generates gRPC code from .proto files
 
 ### XML-RPC Implementation
@@ -439,13 +436,34 @@ Results are saved in `results/performance_metrics.json`
 
 ### gRPC Issues
 
-#### Port Already in Use (50051)
+#### Port Already in Use (50051-50055)
+If services fail to start with "Failed to bind to address" error, ports are already in use.
+
+**Quick Fix - Kill All Service Ports:**
 ```powershell
-# Find process using port 50051
+# Find all processes using service ports
+netstat -ano | findstr "5005"
+
+# Kill all service processes at once (replace PIDs with actual values)
+taskkill /PID <PID1> /F; taskkill /PID <PID2> /F; taskkill /PID <PID3> /F; taskkill /PID <PID4> /F; taskkill /PID <PID5> /F
+```
+
+**Alternative - Kill All Python Processes:**
+```powershell
+# WARNING: This kills ALL Python processes
+Get-Process python | Stop-Process -Force
+```
+
+**Step-by-Step Method:**
+```powershell
+# 1. Find process using a specific port (e.g., 50051)
 netstat -ano | findstr :50051
 
-# Kill process (use PID from above)
+# 2. Kill the specific process (use PID from above)
 taskkill /PID <PID> /F
+
+# 3. Verify port is free
+netstat -ano | findstr :50051
 ```
 
 #### gRPC Version Mismatch
@@ -488,14 +506,25 @@ python generate_proto.py  # For gRPC only
 ```
 
 #### Docker Issues
+
+**Docker Daemon Not Running:**
+```powershell
+# Error: "error during connect: this error may indicate that the docker daemon is not running"
+
+# Solution: Start Docker Desktop
+# 1. Press Windows Key
+# 2. Search for "Docker Desktop"
+# 3. Launch Docker Desktop
+# 4. Wait for green indicator in system tray (30-60 seconds)
+# 5. Verify Docker is running:
+docker info
+```
+
+**Clean Up Containers and Networks:**
 ```powershell
 # Remove all containers and networks
 docker-compose down -v
 docker system prune -f
-
-# For Swarm issues
-docker stack rm student-analysis xmlrpc-analysis
-docker swarm leave --force
 ```
 
 ## Protocol Comparison Summary
@@ -556,10 +585,9 @@ docker swarm leave --force
 
 ### For This Assignment
 
-Run **both protocols** in all three deployment scenarios:
+Run **both protocols** in both deployment scenarios:
 1. **Native** (baseline)
 2. **Docker Compose** (containerization overhead)
-3. **Docker Swarm** (distributed system simulation)
 
 Then use the comparison tool to generate:
 - Performance charts
@@ -569,7 +597,6 @@ Then use the comparison tool to generate:
 This provides comprehensive data showing:
 - Protocol differences (gRPC vs XML-RPC)
 - Deployment overhead (native vs containers)
-- Network impact (single-host vs overlay networking)
 
 ## References
 - [gRPC Documentation](https://grpc.io)

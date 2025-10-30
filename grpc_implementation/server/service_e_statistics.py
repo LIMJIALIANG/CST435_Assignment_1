@@ -1,0 +1,101 @@
+"""
+Service E: Statistical Analysis
+Port: 50055
+FINAL SERVICE - Returns results to client
+"""
+
+import sys
+import os
+import grpc
+from concurrent import futures
+import time
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+grpc_impl_dir = os.path.dirname(current_dir)
+project_root = os.path.dirname(grpc_impl_dir)
+sys.path.insert(0, project_root)
+sys.path.insert(0, os.path.join(current_dir, 'generated'))
+
+import student_service_pb2
+import student_service_pb2_grpc
+from services.stats_service import StatsService
+
+
+class ServiceE(student_service_pb2_grpc.StudentAnalysisServiceServicer):
+    """Service E: Performs statistical analysis (FINAL SERVICE)"""
+    
+    def ProcessChain(self, request, context):
+        """Process statistics and return FINAL combined results"""
+        print(f"\n[Service E] ✓ Chain request received from Service D")
+        print(f"[Service E] Analyzing {len(request.students)} students")
+        print(f"[Service E] This is the FINAL service in the chain")
+        
+        try:
+            start_time = time.time()
+            result = StatsService.perform_analysis(list(request.students), "all")
+            processing_time = time.time() - start_time
+            
+            # Get accumulated results from Services A, B, C, D
+            combined = student_service_pb2.CombinedResponse()
+            combined.CopyFrom(request.partial_results)
+            
+            # Add Service E results (FINAL)
+            combined.pass_rate = result['pass_rate']
+            combined.service_e_time = processing_time
+            
+            for faculty_stat in result['faculty_stats']:
+                stat = combined.faculty_stats.add()
+                stat.faculty = faculty_stat['faculty']
+                stat.average_cgpa = faculty_stat['average_cgpa']
+                stat.student_count = faculty_stat['student_count']
+            
+            for grade_dist in result['grade_distribution']:
+                dist = combined.grade_distribution.add()
+                dist.grade = grade_dist['grade']
+                dist.count = grade_dist['count']
+                dist.percentage = grade_dist['percentage']
+            
+            # Calculate total workflow time
+            combined.total_workflow_time = (
+                combined.service_a_time + 
+                combined.service_b_time + 
+                combined.service_c_time + 
+                combined.service_d_time + 
+                combined.service_e_time
+            )
+            
+            print(f"[Service E] ✓ Completed in {processing_time:.4f}s")
+            print(f"[Service E] ✓ All services completed! Chain: A→B→C→D→E")
+            print(f"[Service E] ✓ Returning FINAL combined results to client\n")
+            
+            return combined
+            
+        except Exception as e:
+            print(f"[Service E] ✗ Error: {e}")
+            context.set_code(grpc.StatusCode.INTERNAL)
+            return student_service_pb2.CombinedResponse()
+
+
+def serve():
+    port = int(os.getenv('SERVICE_PORT', '50055'))
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(ServiceE(), server)
+    server.add_insecure_port(f'[::]:{port}')
+    server.start()
+    
+    print("="*60)
+    print("SERVICE E: Statistical Analysis (FINAL)")
+    print("="*60)
+    print(f"Port: {port}")
+    print("Status: RUNNING")
+    print("="*60 + "\n")
+    
+    try:
+        server.wait_for_termination()
+    except KeyboardInterrupt:
+        print("\n[Service E] Shutting down...")
+        server.stop(0)
+
+
+if __name__ == '__main__':
+    serve()

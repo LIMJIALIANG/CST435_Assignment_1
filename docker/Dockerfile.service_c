@@ -1,0 +1,25 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY services/ ./services/
+COPY data/ ./data/
+COPY grpc_implementation/proto/ ./grpc_implementation/proto/
+COPY generate_proto.py .
+
+RUN python generate_proto.py
+
+COPY grpc_implementation/server/service_c_mergesort_cgpa.py ./grpc_implementation/server/
+
+RUN mkdir -p grpc_implementation/server/generated && \
+    cp grpc_implementation/server/generated/*.py grpc_implementation/server/generated/ || true
+
+ENV SERVICE_PORT=50053
+ENV SERVICE_D_ADDRESS=service-d:50054
+
+EXPOSE 50053
+
+CMD ["python", "grpc_implementation/server/service_c_mergesort_cgpa.py"]

@@ -1,0 +1,32 @@
+# Base image for all services
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy requirements and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy project files
+COPY services/ ./services/
+COPY data/ ./data/
+COPY grpc_implementation/proto/ ./grpc_implementation/proto/
+COPY generate_proto.py .
+
+# Generate gRPC code
+RUN python generate_proto.py
+
+# Copy server code
+COPY grpc_implementation/server/service_a_mapreduce_cgpa.py ./grpc_implementation/server/
+
+# Copy generated files
+RUN mkdir -p grpc_implementation/server/generated && \
+    cp grpc_implementation/server/generated/*.py grpc_implementation/server/generated/ || true
+
+# Set environment variables (can be overridden)
+ENV SERVICE_PORT=50051
+ENV SERVICE_B_ADDRESS=service-b:50052
+
+EXPOSE 50051
+
+CMD ["python", "grpc_implementation/server/service_a_mapreduce_cgpa.py"]

@@ -5,7 +5,7 @@ import warnings
 
 import student_service_pb2 as student__service__pb2
 
-GRPC_GENERATED_VERSION = '1.75.1'
+GRPC_GENERATED_VERSION = '1.76.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -18,7 +18,7 @@ except ImportError:
 if _version_not_supported:
     raise RuntimeError(
         f'The grpc package installed is at version {GRPC_VERSION},'
-        + f' but the generated code in student_service_pb2_grpc.py depends on'
+        + ' but the generated code in student_service_pb2_grpc.py depends on'
         + f' grpcio>={GRPC_GENERATED_VERSION}.'
         + f' Please upgrade your grpc module to grpcio>={GRPC_GENERATED_VERSION}'
         + f' or downgrade your generated code using grpcio-tools<={GRPC_VERSION}.'
@@ -50,6 +50,11 @@ class StudentAnalysisServiceStub(object):
                 request_serializer=student__service__pb2.StatsRequest.SerializeToString,
                 response_deserializer=student__service__pb2.StatsResponse.FromString,
                 _registered_method=True)
+        self.ProcessChain = channel.unary_unary(
+                '/student_service.StudentAnalysisService/ProcessChain',
+                request_serializer=student__service__pb2.ChainRequest.SerializeToString,
+                response_deserializer=student__service__pb2.CombinedResponse.FromString,
+                _registered_method=True)
 
 
 class StudentAnalysisServiceServicer(object):
@@ -74,6 +79,13 @@ class StudentAnalysisServiceServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def ProcessChain(self, request, context):
+        """New method for service chaining
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_StudentAnalysisServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -91,6 +103,11 @@ def add_StudentAnalysisServiceServicer_to_server(servicer, server):
                     servicer.PerformStatisticalAnalysis,
                     request_deserializer=student__service__pb2.StatsRequest.FromString,
                     response_serializer=student__service__pb2.StatsResponse.SerializeToString,
+            ),
+            'ProcessChain': grpc.unary_unary_rpc_method_handler(
+                    servicer.ProcessChain,
+                    request_deserializer=student__service__pb2.ChainRequest.FromString,
+                    response_serializer=student__service__pb2.CombinedResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -175,6 +192,33 @@ class StudentAnalysisService(object):
             '/student_service.StudentAnalysisService/PerformStatisticalAnalysis',
             student__service__pb2.StatsRequest.SerializeToString,
             student__service__pb2.StatsResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
+
+    @staticmethod
+    def ProcessChain(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/student_service.StudentAnalysisService/ProcessChain',
+            student__service__pb2.ChainRequest.SerializeToString,
+            student__service__pb2.CombinedResponse.FromString,
             options,
             channel_credentials,
             insecure,
