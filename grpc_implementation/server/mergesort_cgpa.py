@@ -49,7 +49,11 @@ class MergeSortServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceSer
             
             combined.mergesort_time = processing_time
             
+            # Print top 10 results
             print(f"[MergeSort Service] ✓ Sort completed in {processing_time:.4f}s")
+            print(f"[MergeSort Service] Top 10 students by CGPA:")
+            for i, student in enumerate(cgpa_result['sorted_students'][:10], 1):
+                print(f"[MergeSort Service]   {i}. {student.name} - CGPA: {student.cgpa:.2f} ({student.grade})")
             print(f"[MergeSort Service] → Forwarding to Statistics Service...")
             
             # Forward to Statistics Service

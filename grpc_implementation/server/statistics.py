@@ -63,6 +63,18 @@ class StatisticsServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceSe
             )
             
             print(f"[Statistics Service] ✓ Completed in {processing_time:.4f}s")
+            
+            # Print detailed statistics
+            print(f"[Statistics Service] Pass Rate: {result['pass_rate']:.2f}%")
+            
+            print(f"[Statistics Service] Faculty Distribution:")
+            for faculty_stat in result['faculty_stats']:
+                print(f"[Statistics Service]   {faculty_stat['faculty']}: {faculty_stat['student_count']} students (Avg CGPA: {faculty_stat['average_cgpa']:.2f})")
+            
+            print(f"[Statistics Service] Grade Distribution:")
+            for grade_dist in result['grade_distribution']:
+                print(f"[Statistics Service]   {grade_dist['grade']}: {grade_dist['count']} students ({grade_dist['percentage']:.1f}%)")
+            
             print(f"[Statistics Service] ✓ All services completed! Chain: MapReduce→MergeSort→Statistics")
             print(f"[Statistics Service] ✓ Returning FINAL combined results to client\n")
             

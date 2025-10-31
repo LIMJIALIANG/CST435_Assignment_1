@@ -1,24 +1,21 @@
-#!/usr/bin/env pwsh
-# Run XML-RPC microservices client
+# Run microservices client
 
-Write-Host "="*70 -ForegroundColor Cyan
-Write-Host "XML-RPC Microservices Client" -ForegroundColor Cyan
-Write-Host "="*70 -ForegroundColor Cyan
-
-# Set environment variables
-$env:MAPREDUCE_URL = "http://localhost:8001"
-$env:CSV_PATH = "../../data/students.csv"
-$env:OUTPUT_FILE = "../../results/xmlrpc_performance_metrics.json"
-
-Write-Host "`nConfiguration:" -ForegroundColor Yellow
-Write-Host "  MapReduce Service URL: $env:MAPREDUCE_URL" -ForegroundColor White
-Write-Host "  CSV Path: $env:CSV_PATH" -ForegroundColor White
-Write-Host "  Output File: $env:OUTPUT_FILE" -ForegroundColor White
+Write-Host "Running Microservices Client..." -ForegroundColor Green
 Write-Host ""
 
-# Run client
-python client.py
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$projectRoot = Split-Path -Parent (Split-Path -Parent $scriptDir)
 
-Write-Host "`n" + ("="*70) -ForegroundColor Cyan
-Write-Host "Client execution completed" -ForegroundColor Green
-Write-Host "="*70 -ForegroundColor Cyan
+# Activate virtual environment
+$venvActivate = Join-Path $projectRoot ".venv\Scripts\Activate.ps1"
+if (Test-Path $venvActivate) {
+    Write-Host "Activating virtual environment..." -ForegroundColor Cyan
+    & $venvActivate
+}
+
+# Run client
+Write-Host "Initiating workflow: Client → MapReduce → MergeSort → Statistics" -ForegroundColor Yellow
+Write-Host ""
+# Run the microservices client
+Write-Host "Running microservices client..." -ForegroundColor Green
+python "$scriptDir\client.py"

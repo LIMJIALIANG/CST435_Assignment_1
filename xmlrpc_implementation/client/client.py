@@ -122,11 +122,9 @@ def main():
     output_file = os.getenv('OUTPUT_FILE', '../results/xmlrpc_performance_metrics.json')
     
     print("\n" + "="*70)
-    print("XML-RPC CHAINED MICROSERVICES CLIENT")
+    print("MICROSERVICES CLIENT")
     print("="*70)
-    print(f"MapReduce Service URL: {mapreduce_url}")
-    print(f"CSV Path: {csv_path}")
-    print(f"Output File: {output_file}")
+    print(f"Architecture: 3 Connected Services (MapReduce→MergeSort→Statistics)")
     print("="*70 + "\n")
     
     # Create output directory if it doesn't exist
@@ -148,13 +146,17 @@ def main():
             print("[Client] No student data loaded. Exiting.")
             return
         
+        print(f"[Client] ✓ Loaded {len(students)} students")
+        
         # Display workflow
         print("\n" + "="*70)
-        print("XML-RPC MICROSERVICES WORKFLOW")
+        print("MICROSERVICES WORKFLOW")
         print("="*70)
-        print("Architecture: Client → MapReduce → MergeSort → Statistics → Client")
-        print("Operations: CGPA Classification → Sort by CGPA → Statistical Analysis")
+        print("Chain: Client → MapReduce → MergeSort → Statistics → Client")
         print("="*70 + "\n")
+        
+        print("[Client] Starting workflow...")
+        print(f"[Client] Sending request to MapReduce Service ({mapreduce_url})")
         
         # Start workflow (single call to MapReduce Service)
         workflow_result = client.start_workflow(students)
@@ -171,33 +173,78 @@ def main():
         total_processing_time = mapreduce_time + mergesort_time + statistics_time
         network_overhead = workflow_time - total_processing_time
         
-        # Display results
+        # Display results in consistent format
         print("\n" + "="*70)
-        print("SERVICE RESULTS")
+        print("WORKFLOW COMPLETED - ALL RESULTS")
         print("="*70)
-        print(f"\nMapReduce Service (CGPA Classification):")
-        print(f"  Result: {results['mapreduce']['cgpa_classification']}")
-        print(f"  Time: {mapreduce_time:.4f}s")
         
-        print(f"\nMergeSort Service (Sort by CGPA):")
-        print(f"  Sorted: {results['mergesort']['sorted_count']} students")
-        print(f"  Time: {mergesort_time:.4f}s")
+        # MapReduce Service Results
+        print(f"\n[MapReduce Service] CGPA Classification (Time: {mapreduce_time:.4f}s)")
+        print("-" * 70)
+        print(f"  CGPA Classification:")
+        for grade_range, count in results['mapreduce']['cgpa_classification'].items():
+            print(f"    {grade_range}: {count} students")
         
-        print(f"\nStatistics Service:")
-        print(f"  Result: {results['statistics']['result']}")
-        print(f"  Time: {statistics_time:.4f}s")
+        # MergeSort Service Results
+        print(f"\n[MergeSort Service] Sort by CGPA (Time: {mergesort_time:.4f}s)")
+        print("-" * 70)
+        print(f"  Top 10 students by CGPA:")
+        for i, student in enumerate(results['mergesort']['top_10'], 1):
+            print(f"    {i}. {student['name']} - CGPA: {student['cgpa']:.2f} ({student['grade']})")
+        
+        # Statistics Service Results
+        print(f"\n[Statistics Service] Statistical Analysis (Time: {statistics_time:.4f}s)")
+        print("-" * 70)
+        stats = results['statistics']['result']
+        
+        # Handle different statistics structure
+        if 'cgpa' in stats and 'distribution' in stats:
+            # Structure from calculate_statistics
+            cgpa_stats = stats['cgpa']
+            distribution = stats['distribution']
+            
+            # Calculate pass rate (CGPA >= 2.0)
+            pass_rate = sum(1 for s in students if s['cgpa'] >= 2.0) / len(students) * 100 if students else 0.0
+            print(f"  Pass Rate: {pass_rate:.2f}%")
+            
+            print(f"\n  Faculty Statistics:")
+            # Calculate average CGPA per faculty
+            faculty_cgpa = {}
+            for student in students:
+                faculty = student['faculty']
+                if faculty not in faculty_cgpa:
+                    faculty_cgpa[faculty] = []
+                faculty_cgpa[faculty].append(student['cgpa'])
+            
+            for faculty in sorted(faculty_cgpa.keys()):
+                cgpa_list = faculty_cgpa[faculty]
+                avg_cgpa = sum(cgpa_list) / len(cgpa_list)
+                count = distribution['by_faculty'][faculty]
+                print(f"    {faculty}: Avg CGPA {avg_cgpa:.2f} ({count} students)")
+            
+            print(f"\n  Grade Distribution:")
+            total_students = distribution['total_students']
+            for grade in sorted(distribution['by_grade'].keys()):
+                count = distribution['by_grade'][grade]
+                percentage = (count / total_students * 100) if total_students > 0 else 0.0
+                print(f"    Grade {grade}: {count} students ({percentage:.1f}%)")
+        else:
+            # Fallback for other structures
+            print(f"  Statistics: {stats}")
         
         # Performance summary
-        print("\n" + "="*70)
+        print(f"\n{'='*70}")
         print("PERFORMANCE SUMMARY")
         print("="*70)
-        print(f"MapReduce Time:             {mapreduce_time:.4f}s")
-        print(f"MergeSort Time:             {mergesort_time:.4f}s")
-        print(f"Statistics Time:            {statistics_time:.4f}s")
-        print(f"Total Processing:           {total_processing_time:.4f}s")
-        print(f"End-to-End Time:            {workflow_time:.4f}s")
-        print(f"Network Overhead:           {network_overhead:.4f}s")
-        print(f"Overhead %:                 {(network_overhead/workflow_time*100):.2f}%")
+        print(f"MapReduce Time:        {mapreduce_time:.4f}s")
+        print(f"MergeSort Time:        {mergesort_time:.4f}s")
+        print(f"Statistics Time:       {statistics_time:.4f}s")
+        print(f"Total Processing:      {total_processing_time:.4f}s")
+        print(f"End-to-End Time:       {workflow_time:.4f}s")
+        print(f"Network Overhead:      {network_overhead:.4f}s")
+        
+        print(f"\n{'='*70}")
+        print("✓ All services (MapReduce→MergeSort→Statistics) completed successfully!")
         print("="*70 + "\n")
         
         # Save metrics

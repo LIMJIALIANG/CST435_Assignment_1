@@ -124,13 +124,77 @@ class MicroservicesClient:
             print(f"End-to-End Time:       {total_workflow_time:.4f}s")
             print(f"Network Overhead:      {(total_workflow_time - combined_response.total_workflow_time):.4f}s")
             
-            # Store metrics
+            # Store detailed metrics (matching XML-RPC format)
+            network_overhead = total_workflow_time - combined_response.total_workflow_time
+            
             self.metrics['workflow_time'] = total_workflow_time
             self.metrics['mapreduce_time'] = combined_response.mapreduce_time
             self.metrics['mergesort_time'] = combined_response.mergesort_time
             self.metrics['statistics_time'] = combined_response.statistics_time
             self.metrics['total_processing_time'] = combined_response.total_workflow_time
-            self.metrics['network_overhead'] = total_workflow_time - combined_response.total_workflow_time
+            self.metrics['network_overhead'] = network_overhead
+            
+            # Add summary statistics
+            self.metrics['summary'] = {
+                'total_services': 3,
+                'avg_service_time': combined_response.total_workflow_time / 3,
+                'overhead_percentage': (network_overhead / total_workflow_time) * 100
+            }
+            
+            # Add detailed results
+            self.metrics['detailed_results'] = {}
+            
+            # MapReduce results
+            cgpa_classification = {}
+            for cgpa_range in combined_response.cgpa_ranges:
+                cgpa_classification[cgpa_range.range] = cgpa_range.count
+            
+            self.metrics['detailed_results']['mapreduce'] = {
+                'cgpa_classification': cgpa_classification,
+                'processing_time': combined_response.mapreduce_time
+            }
+            
+            # MergeSort results
+            top_10_students = []
+            for student in combined_response.sorted_by_cgpa[:10]:
+                top_10_students.append({
+                    'student_id': student.student_id,
+                    'name': student.name,
+                    'faculty': student.faculty,
+                    'cgpa': student.cgpa,
+                    'grade': student.grade
+                })
+            
+            self.metrics['detailed_results']['mergesort'] = {
+                'sorted_count': len(combined_response.sorted_by_cgpa),
+                'top_10': top_10_students,
+                'processing_time': combined_response.mergesort_time
+            }
+            
+            # Statistics results
+            faculty_stats = {}
+            for faculty_stat in combined_response.faculty_stats:
+                faculty_stats[faculty_stat.faculty] = {
+                    'average_cgpa': faculty_stat.average_cgpa,
+                    'student_count': faculty_stat.student_count
+                }
+            
+            grade_distribution = {}
+            for grade_dist in combined_response.grade_distribution:
+                grade_distribution[grade_dist.grade] = {
+                    'count': grade_dist.count,
+                    'percentage': grade_dist.percentage
+                }
+            
+            self.metrics['detailed_results']['statistics'] = {
+                'operation': 'statistical_analysis',
+                'result': {
+                    'pass_rate': combined_response.pass_rate,
+                    'faculty_statistics': faculty_stats,
+                    'grade_distribution': grade_distribution
+                },
+                'processing_time': combined_response.statistics_time
+            }
             
             print(f"\n{'='*70}")
             print("✓ All services (MapReduce→MergeSort→Statistics) completed successfully!")

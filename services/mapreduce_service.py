@@ -88,14 +88,22 @@ class MapReduceService:
         # Reduce phase
         result = MapReduceService.reduce_counts(mapped_data)
         
+        # Sort results by grade order
+        grade_order = [
+            "A (3.68-4.00)", "A- (3.50-3.67)", "B+ (3.33-3.49)", "B (3.00-3.32)",
+            "B- (2.83-2.99)", "C+ (2.67-2.82)", "C (2.50-2.66)", "C- (2.33-2.49)",
+            "D+ (2.17-2.32)", "D (2.00-2.16)", "D- (1.67-1.99)", "F (0.00-1.66)"
+        ]
+        sorted_result = {grade: result[grade] for grade in grade_order if grade in result}
+        
         processing_time = time.time() - start_time
         
         print(f"[MapReduce] CGPA Classification")
         print(f"[MapReduce] Processed {len(students)} students")
-        print(f"[MapReduce] Results: {result}")
+        print(f"[MapReduce] Results: {sorted_result}")
         print(f"[MapReduce] Processing time: {processing_time:.4f} seconds")
         
         return {
-            'cgpa_classification': result,
+            'cgpa_classification': sorted_result,
             'processing_time': processing_time
         }
