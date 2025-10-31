@@ -19,7 +19,7 @@ RUN mkdir -p grpc_implementation/client/generated && \
     cp grpc_implementation/client/generated/*.py grpc_implementation/client/generated/ || true
 
 ENV SERVICE_A_ADDRESS=service-a:50051
-ENV OUTPUT_FILE=/app/results/grpc_docker_performance_metrics.json
+ENV OUTPUT_FILE=/app/results/microservices_docker_performance_metrics.json
 
 # Wait for services to be ready, then run client
 CMD sleep 10 && python grpc_implementation/client/client.py
