@@ -1,7 +1,7 @@
 """
-Service A: MapReduce CGPA Count
+MapReduce Service: CGPA Classification
 Port: 50051
-Chains to: Service B (50052)
+Chains to: MergeSort Service (50053)
 """
 
 import sys
@@ -22,38 +22,39 @@ import student_service_pb2_grpc
 from services.mapreduce_service import MapReduceService
 
 
-class ServiceA(student_service_pb2_grpc.StudentAnalysisServiceServicer):
-    """Service A: Performs CGPA counting and forwards to Service B"""
+class MapReduceServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceServicer):
+    """MapReduce Service: Performs CGPA classification, forwards to MergeSort Service"""
     
     def __init__(self):
-        self.next_service = os.getenv('SERVICE_B_ADDRESS', 'localhost:50052')
-        print(f"[Service A] Next service: {self.next_service}")
+        self.next_service = os.getenv('MERGESORT_ADDRESS', 'localhost:50053')
+        print(f"[MapReduce Service] Next service: {self.next_service}")
     
     def ProcessChain(self, request, context):
-        """Process CGPA count and forward chain to Service B"""
-        print(f"\n[Service A] ✓ Chain request received")
-        print(f"[Service A] Processing {len(request.students)} students")
+        """Process CGPA classification, forward chain to MergeSort Service"""
+        print(f"\n[MapReduce Service] ✓ Chain request received")
+        print(f"[MapReduce Service] Processing {len(request.students)} students")
         
         try:
-            # Process MapReduce CGPA
+            # Process MapReduce CGPA Classification
             start_time = time.time()
-            result = MapReduceService.perform_mapreduce(list(request.students), "cgpa_count")
+            cgpa_result = MapReduceService.perform_mapreduce(list(request.students))
             processing_time = time.time() - start_time
             
-            # Create combined response with Service A results
+            # Create combined response with MapReduce Service results
             combined = student_service_pb2.CombinedResponse()
             
-            # Add Service A results
-            for range_key, count in result['result'].items():
+            # Add CGPA classification results
+            for grade_key, count in cgpa_result['cgpa_classification'].items():
                 cgpa_range = combined.cgpa_ranges.add()
-                cgpa_range.range = range_key
+                cgpa_range.range = grade_key
                 cgpa_range.count = count
-            combined.service_a_time = processing_time
             
-            print(f"[Service A] ✓ Completed in {processing_time:.4f}s")
-            print(f"[Service A] → Forwarding to Service B...")
+            combined.mapreduce_time = processing_time
             
-            # Forward to Service B with accumulated results
+            print(f"[MapReduce Service] ✓ CGPA Classification completed in {processing_time:.4f}s")
+            print(f"[MapReduce Service] → Forwarding to MergeSort Service...")
+            
+            # Forward to MergeSort Service with accumulated results
             try:
                 channel = grpc.insecure_channel(self.next_service)
                 stub = student_service_pb2_grpc.StudentAnalysisServiceStub(channel)
@@ -63,20 +64,20 @@ class ServiceA(student_service_pb2_grpc.StudentAnalysisServiceServicer):
                     partial_results=combined
                 )
                 
-                # Wait for and receive combined results from Service B (which includes C, D, E)
+                # Wait for and receive combined results from MergeSort Service (which includes Statistics)
                 final_response = stub.ProcessChain(next_request, timeout=60)
                 channel.close()
                 
-                print(f"[Service A] ✓ Received combined results from downstream services\n")
+                print(f"[MapReduce Service] ✓ Received combined results from downstream services\n")
                 return final_response
                 
             except Exception as e:
-                print(f"[Service A] ✗ Failed to forward to Service B: {e}\n")
-                # Return only Service A results if forwarding fails
+                print(f"[MapReduce Service] ✗ Failed to forward to MergeSort Service: {e}\n")
+                # Return only MapReduce Service results if forwarding fails
                 return combined
             
         except Exception as e:
-            print(f"[Service A] ✗ Error: {e}")
+            print(f"[MapReduce Service] ✗ Error: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
             return student_service_pb2.CombinedResponse()
 
@@ -84,21 +85,22 @@ class ServiceA(student_service_pb2_grpc.StudentAnalysisServiceServicer):
 def serve():
     port = int(os.getenv('SERVICE_PORT', '50051'))
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(ServiceA(), server)
+    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(MapReduceServiceHandler(), server)
     server.add_insecure_port(f'[::]:{port}')
     server.start()
     
     print("="*60)
-    print("SERVICE A: MapReduce CGPA Count")
+    print("MAPREDUCE SERVICE: CGPA Classification")
     print("="*60)
     print(f"Port: {port}")
     print("Status: RUNNING")
+    print("Operation: CGPA Classification")
     print("="*60 + "\n")
     
     try:
         server.wait_for_termination()
     except KeyboardInterrupt:
-        print("\n[Service A] Shutting down...")
+        print("\n[MapReduce Service] Shutting down...")
         server.stop(0)
 
 

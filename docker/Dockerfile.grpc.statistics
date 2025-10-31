@@ -12,14 +12,13 @@ COPY generate_proto.py .
 
 RUN python generate_proto.py
 
-COPY grpc_implementation/server/service_b_mapreduce_grade.py ./grpc_implementation/server/
+COPY grpc_implementation/server/statistics.py ./grpc_implementation/server/
 
 RUN mkdir -p grpc_implementation/server/generated && \
     cp grpc_implementation/server/generated/*.py grpc_implementation/server/generated/ || true
 
-ENV SERVICE_PORT=50052
-ENV SERVICE_C_ADDRESS=service-c:50053
+ENV SERVICE_PORT=50055
 
-EXPOSE 50052
+EXPOSE 50055
 
-CMD ["python", "grpc_implementation/server/service_b_mapreduce_grade.py"]
+CMD ["python", "grpc_implementation/server/statistics.py"]

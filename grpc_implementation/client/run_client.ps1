@@ -14,7 +14,7 @@ if (Test-Path $venvActivate) {
 }
 
 # Run client
-Write-Host "Initiating workflow: Client → A → B → C → D → E" -ForegroundColor Yellow
+Write-Host "Initiating workflow: Client → MapReduce → MergeSort → Statistics" -ForegroundColor Yellow
 Write-Host ""
 # Run the microservices client
 Write-Host "Running microservices client..." -ForegroundColor Green

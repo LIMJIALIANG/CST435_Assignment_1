@@ -1,20 +1,20 @@
 version: '3.8'
 
 services:
-  # Service E (Terminal Service - Statistics)
-  xmlrpc-service-e:
+  # Statistics Service (Terminal Service - Statistical Analysis)
+  xmlrpc-statistics:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.xmlrpc.service_e
-    container_name: xmlrpc-service-e
+      dockerfile: docker/Dockerfile.xmlrpc.statistics
+    container_name: xmlrpc-statistics
     ports:
       - "8005:8005"
     networks:
       - xmlrpc-network
     environment:
       - PYTHONUNBUFFERED=1
-      - SERVICE_E_HOST=0.0.0.0
-      - SERVICE_E_PORT=8005
+      - STATISTICS_HOST=0.0.0.0
+      - STATISTICS_PORT=8005
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import xmlrpc.client; xmlrpc.client.ServerProxy(\"http://localhost:8005\", allow_none=True).system.listMethods()' || exit 1"]
       interval: 3s
@@ -22,49 +22,24 @@ services:
       retries: 10
       start_period: 5s
 
-  # Service D (MergeSort Grade)
-  xmlrpc-service-d:
+  # MergeSort Service (Sort CGPA and Grade)
+  xmlrpc-mergesort:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.xmlrpc.service_d
-    container_name: xmlrpc-service-d
-    ports:
-      - "8004:8004"
-    networks:
-      - xmlrpc-network
-    depends_on:
-      xmlrpc-service-e:
-        condition: service_healthy
-    environment:
-      - PYTHONUNBUFFERED=1
-      - SERVICE_D_HOST=0.0.0.0
-      - SERVICE_D_PORT=8004
-      - SERVICE_E_URL=http://xmlrpc-service-e:8005
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import xmlrpc.client; xmlrpc.client.ServerProxy(\"http://localhost:8004\", allow_none=True).system.listMethods()' || exit 1"]
-      interval: 3s
-      timeout: 2s
-      retries: 10
-      start_period: 5s
-
-  # Service C (MergeSort CGPA)
-  xmlrpc-service-c:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.xmlrpc.service_c
-    container_name: xmlrpc-service-c
+      dockerfile: docker/Dockerfile.xmlrpc.mergesort
+    container_name: xmlrpc-mergesort
     ports:
       - "8003:8003"
     networks:
       - xmlrpc-network
     depends_on:
-      xmlrpc-service-d:
+      xmlrpc-statistics:
         condition: service_healthy
     environment:
       - PYTHONUNBUFFERED=1
-      - SERVICE_C_HOST=0.0.0.0
-      - SERVICE_C_PORT=8003
-      - SERVICE_D_URL=http://xmlrpc-service-d:8004
+      - MERGESORT_HOST=0.0.0.0
+      - MERGESORT_PORT=8003
+      - STATISTICS_URL=http://xmlrpc-statistics:8005
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import xmlrpc.client; xmlrpc.client.ServerProxy(\"http://localhost:8003\", allow_none=True).system.listMethods()' || exit 1"]
       interval: 3s
@@ -72,49 +47,24 @@ services:
       retries: 10
       start_period: 5s
 
-  # Service B (MapReduce Grade Count)
-  xmlrpc-service-b:
+  # MapReduce Service (CGPA and Grade Classification - Entry Point)
+  xmlrpc-mapreduce:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.xmlrpc.service_b
-    container_name: xmlrpc-service-b
-    ports:
-      - "8002:8002"
-    networks:
-      - xmlrpc-network
-    depends_on:
-      xmlrpc-service-c:
-        condition: service_healthy
-    environment:
-      - PYTHONUNBUFFERED=1
-      - SERVICE_B_HOST=0.0.0.0
-      - SERVICE_B_PORT=8002
-      - SERVICE_C_URL=http://xmlrpc-service-c:8003
-    healthcheck:
-      test: ["CMD-SHELL", "python -c 'import xmlrpc.client; xmlrpc.client.ServerProxy(\"http://localhost:8002\", allow_none=True).system.listMethods()' || exit 1"]
-      interval: 3s
-      timeout: 2s
-      retries: 10
-      start_period: 5s
-
-  # Service A (MapReduce CGPA Count - Entry Point)
-  xmlrpc-service-a:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.xmlrpc.service_a
-    container_name: xmlrpc-service-a
+      dockerfile: docker/Dockerfile.xmlrpc.mapreduce
+    container_name: xmlrpc-mapreduce
     ports:
       - "8001:8001"
     networks:
       - xmlrpc-network
     depends_on:
-      xmlrpc-service-b:
+      xmlrpc-mergesort:
         condition: service_healthy
     environment:
       - PYTHONUNBUFFERED=1
-      - SERVICE_A_HOST=0.0.0.0
-      - SERVICE_A_PORT=8001
-      - SERVICE_B_URL=http://xmlrpc-service-b:8002
+      - MAPREDUCE_HOST=0.0.0.0
+      - MAPREDUCE_PORT=8001
+      - MERGESORT_URL=http://xmlrpc-mergesort:8003
     healthcheck:
       test: ["CMD-SHELL", "python -c 'import xmlrpc.client; xmlrpc.client.ServerProxy(\"http://localhost:8001\", allow_none=True).system.listMethods()' || exit 1"]
       interval: 3s
@@ -122,20 +72,20 @@ services:
       retries: 10
       start_period: 5s
 
-  # Client (calls Service A)
+  # Client (calls MapReduce Service)
   xmlrpc-client:
     build:
       context: ..
       dockerfile: docker/Dockerfile.xmlrpc.client
     container_name: xmlrpc-client
     depends_on:
-      xmlrpc-service-a:
+      xmlrpc-mapreduce:
         condition: service_healthy
     networks:
       - xmlrpc-network
     environment:
       - PYTHONUNBUFFERED=1
-      - SERVICE_A_URL=http://xmlrpc-service-a:8001
+      - MAPREDUCE_URL=http://xmlrpc-mapreduce:8001
       - CSV_PATH=/app/data/students.csv
       - OUTPUT_FILE=/app/results/xmlrpc_docker_performance_metrics.json
     volumes:
@@ -145,3 +95,4 @@ services:
 networks:
   xmlrpc-network:
     driver: bridge
+

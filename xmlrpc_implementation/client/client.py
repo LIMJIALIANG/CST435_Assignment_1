@@ -1,6 +1,6 @@
 """
 XML-RPC Client for Chained Microservices Architecture
-Calls only Service A, which triggers the entire chain
+Calls only MapReduce Service, which triggers the entire chain
 """
 from xmlrpc.client import ServerProxy
 import json
@@ -16,32 +16,32 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 class ChainedXMLRPCClient:
     """Client for chained XML-RPC microservices"""
     
-    def __init__(self, service_a_url):
+    def __init__(self, mapreduce_url):
         """
         Initialize client
         Args:
-            service_a_url: URL of Service A (entry point)
+            mapreduce_url: URL of MapReduce Service (entry point)
         """
-        self.service_a_url = service_a_url
-        self.service_a = None
-        print(f"[Client] Initialized with Service A URL: {service_a_url}")
+        self.mapreduce_url = mapreduce_url
+        self.mapreduce_service = None
+        print(f"[Client] Initialized with MapReduce Service URL: {mapreduce_url}")
     
     def connect(self):
-        """Connect to Service A"""
+        """Connect to MapReduce Service"""
         try:
-            self.service_a = ServerProxy(self.service_a_url, allow_none=True)
+            self.mapreduce_service = ServerProxy(self.mapreduce_url, allow_none=True)
             # Test connection
-            self.service_a.system.listMethods()
-            print(f"[Client] Connected to Service A at {self.service_a_url}")
+            self.mapreduce_service.system.listMethods()
+            print(f"[Client] Connected to MapReduce Service at {self.mapreduce_url}")
         except Exception as e:
-            print(f"[Client] Failed to connect to Service A: {str(e)}")
+            print(f"[Client] Failed to connect to MapReduce Service: {str(e)}")
             raise
     
     def disconnect(self):
         """Disconnect from server"""
-        if self.service_a:
-            self.service_a = None
-            print("[Client] Disconnected from Service A")
+        if self.mapreduce_service:
+            self.mapreduce_service = None
+            print("[Client] Disconnected from MapReduce Service")
     
     def load_students_from_csv(self, csv_path):
         """
@@ -80,8 +80,8 @@ class ChainedXMLRPCClient:
     
     def start_workflow(self, students):
         """
-        Start the microservices workflow by calling Service A
-        Service A will automatically chain to B → C → D → E
+        Start the microservices workflow by calling MapReduce Service
+        MapReduce Service will automatically chain to MergeSort → Statistics
         
         Args:
             students: List of student dictionaries
@@ -90,14 +90,14 @@ class ChainedXMLRPCClient:
         """
         try:
             print("\n[Client] Starting chained workflow...")
-            print("[Client] Calling Service A...")
+            print("[Client] Calling MapReduce Service...")
             
-            # Call Service A with empty accumulated_results
-            # Service A will chain through all services
+            # Call MapReduce Service with empty accumulated_results
+            # MapReduce Service will chain through all services
             accumulated_results = {}
             
             workflow_start = time.time()
-            final_results = self.service_a.process(students, accumulated_results)
+            final_results = self.mapreduce_service.process(students, accumulated_results)
             workflow_end = time.time()
             
             workflow_time = workflow_end - workflow_start
@@ -117,14 +117,14 @@ class ChainedXMLRPCClient:
 def main():
     """Main execution"""
     # Configuration
-    service_a_url = os.getenv('SERVICE_A_URL', 'http://localhost:8001')
+    mapreduce_url = os.getenv('MAPREDUCE_URL', 'http://localhost:8001')
     csv_path = os.getenv('CSV_PATH', '../data/students.csv')
     output_file = os.getenv('OUTPUT_FILE', '../results/xmlrpc_performance_metrics.json')
     
     print("\n" + "="*70)
     print("XML-RPC CHAINED MICROSERVICES CLIENT")
     print("="*70)
-    print(f"Service A URL: {service_a_url}")
+    print(f"MapReduce Service URL: {mapreduce_url}")
     print(f"CSV Path: {csv_path}")
     print(f"Output File: {output_file}")
     print("="*70 + "\n")
@@ -135,7 +135,7 @@ def main():
         os.makedirs(output_dir)
     
     # Create client
-    client = ChainedXMLRPCClient(service_a_url)
+    client = ChainedXMLRPCClient(mapreduce_url)
     
     try:
         # Connect
@@ -152,11 +152,11 @@ def main():
         print("\n" + "="*70)
         print("XML-RPC MICROSERVICES WORKFLOW")
         print("="*70)
-        print("Architecture: Client → A → B → C → D → E → Client")
-        print("Operations: CGPA Count → Grade Count → Sort CGPA → Sort Grade → Statistics")
+        print("Architecture: Client → MapReduce → MergeSort → Statistics → Client")
+        print("Operations: CGPA Classification → Sort by CGPA → Statistical Analysis")
         print("="*70 + "\n")
         
-        # Start workflow (single call to Service A)
+        # Start workflow (single call to MapReduce Service)
         workflow_result = client.start_workflow(students)
         
         # Extract results
@@ -164,49 +164,36 @@ def main():
         workflow_time = workflow_result['workflow_time']
         
         # Calculate metrics
-        service_a_time = results['service_a']['processing_time']
-        service_b_time = results['service_b']['processing_time']
-        service_c_time = results['service_c']['processing_time']
-        service_d_time = results['service_d']['processing_time']
-        service_e_time = results['service_e']['processing_time']
+        mapreduce_time = results['mapreduce']['processing_time']
+        mergesort_time = results['mergesort']['processing_time']
+        statistics_time = results['statistics']['processing_time']
         
-        total_processing_time = (service_a_time + service_b_time + 
-                                service_c_time + service_d_time + service_e_time)
+        total_processing_time = mapreduce_time + mergesort_time + statistics_time
         network_overhead = workflow_time - total_processing_time
         
         # Display results
         print("\n" + "="*70)
         print("SERVICE RESULTS")
         print("="*70)
-        print(f"\nService A (CGPA Count):")
-        print(f"  Result: {results['service_a']['result']}")
-        print(f"  Time: {service_a_time:.4f}s")
+        print(f"\nMapReduce Service (CGPA Classification):")
+        print(f"  Result: {results['mapreduce']['cgpa_classification']}")
+        print(f"  Time: {mapreduce_time:.4f}s")
         
-        print(f"\nService B (Grade Count):")
-        print(f"  Result: {results['service_b']['result']}")
-        print(f"  Time: {service_b_time:.4f}s")
+        print(f"\nMergeSort Service (Sort by CGPA):")
+        print(f"  Sorted: {results['mergesort']['sorted_count']} students")
+        print(f"  Time: {mergesort_time:.4f}s")
         
-        print(f"\nService C (Sort CGPA):")
-        print(f"  Sorted: {results['service_c']['result']['sorted_count']} students")
-        print(f"  Time: {service_c_time:.4f}s")
-        
-        print(f"\nService D (Sort Grade):")
-        print(f"  Sorted: {results['service_d']['result']['sorted_count']} students")
-        print(f"  Time: {service_d_time:.4f}s")
-        
-        print(f"\nService E (Statistics):")
-        print(f"  Result: {results['service_e']['result']}")
-        print(f"  Time: {service_e_time:.4f}s")
+        print(f"\nStatistics Service:")
+        print(f"  Result: {results['statistics']['result']}")
+        print(f"  Time: {statistics_time:.4f}s")
         
         # Performance summary
         print("\n" + "="*70)
         print("PERFORMANCE SUMMARY")
         print("="*70)
-        print(f"Service A Time (CGPA):      {service_a_time:.4f}s")
-        print(f"Service B Time (Grade):     {service_b_time:.4f}s")
-        print(f"Service C Time (Sort CGPA): {service_c_time:.4f}s")
-        print(f"Service D Time (Sort Grade):{service_d_time:.4f}s")
-        print(f"Service E Time (Stats):     {service_e_time:.4f}s")
+        print(f"MapReduce Time:             {mapreduce_time:.4f}s")
+        print(f"MergeSort Time:             {mergesort_time:.4f}s")
+        print(f"Statistics Time:            {statistics_time:.4f}s")
         print(f"Total Processing:           {total_processing_time:.4f}s")
         print(f"End-to-End Time:            {workflow_time:.4f}s")
         print(f"Network Overhead:           {network_overhead:.4f}s")
@@ -218,18 +205,16 @@ def main():
             'timestamp': datetime.now().isoformat(),
             'protocol': 'XML-RPC',
             'architecture': 'microservices_chained',
-            'service_a_url': service_a_url,
+            'mapreduce_url': mapreduce_url,
             'workflow_time': workflow_time,
-            'service_a_time': service_a_time,
-            'service_b_time': service_b_time,
-            'service_c_time': service_c_time,
-            'service_d_time': service_d_time,
-            'service_e_time': service_e_time,
+            'mapreduce_time': mapreduce_time,
+            'mergesort_time': mergesort_time,
+            'statistics_time': statistics_time,
             'total_processing_time': total_processing_time,
             'network_overhead': network_overhead,
             'summary': {
-                'total_services': 5,
-                'avg_service_time': total_processing_time / 5,
+                'total_services': 3,
+                'avg_service_time': total_processing_time / 3,
                 'overhead_percentage': (network_overhead / workflow_time) * 100
             },
             'detailed_results': results

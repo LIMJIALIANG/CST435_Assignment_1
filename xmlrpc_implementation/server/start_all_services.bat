@@ -2,42 +2,32 @@
 REM Start all XML-RPC microservices
 echo Starting XML-RPC Microservices...
 echo.
-echo Note: This will start 5 services in separate windows
+echo Note: This will start 3 services in separate windows
 echo Press Ctrl+C to cancel, or any other key to continue...
 pause > nul
 
 cd /d "%~dp0"
 
-REM Start Service E first (terminal service)
-echo Starting Service E (Statistics) on port 8005...
-start "Service E" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python service_e.py"
+REM Start Statistics Service first (terminal service)
+echo Starting Statistics Service on port 8005...
+start "Statistics Service" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python statistics.py"
 timeout /t 2 /nobreak > nul
 
-REM Start Service D
-echo Starting Service D (Sort Grade) on port 8004...
-start "Service D" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python service_d.py"
+REM Start MergeSort Service
+echo Starting MergeSort Service (Sort CGPA + Grade) on port 8003...
+start "MergeSort Service" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python mergesort.py"
 timeout /t 2 /nobreak > nul
 
-REM Start Service C
-echo Starting Service C (Sort CGPA) on port 8003...
-start "Service C" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python service_c.py"
-timeout /t 2 /nobreak > nul
-
-REM Start Service B
-echo Starting Service B (Grade Count) on port 8002...
-start "Service B" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python service_b.py"
-timeout /t 2 /nobreak > nul
-
-REM Start Service A (entry point)
-echo Starting Service A (CGPA Count) on port 8001...
-start "Service A" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python service_a.py"
+REM Start MapReduce Service (entry point)
+echo Starting MapReduce Service (CGPA + Grade Count) on port 8001...
+start "MapReduce Service" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python mapreduce.py"
 
 echo.
 echo ======================================================================
 echo All services started!
 echo ======================================================================
 echo Service Chain:
-echo   Client → Service A (8001) → Service B (8002) → Service C (8003) → Service D (8004) → Service E (8005) → Client
+echo   Client → MapReduce (8001) → MergeSort (8003) → Statistics (8005) → Client
 echo.
 echo To run the client:
 echo   cd client
@@ -46,3 +36,4 @@ echo.
 echo To stop all services, close the command windows
 echo ======================================================================
 pause
+

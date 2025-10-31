@@ -60,11 +60,9 @@ class ProtocolComparator:
         print("-" * 80)
         
         # Individual service times
-        print(f"{'Service A (CGPA Count)':<30} {self.grpc_metrics['service_a_time']:<25.6f} {self.xmlrpc_metrics['service_a_time']:<25.6f}")
-        print(f"{'Service B (Grade Count)':<30} {self.grpc_metrics['service_b_time']:<25.6f} {self.xmlrpc_metrics['service_b_time']:<25.6f}")
-        print(f"{'Service C (Sort CGPA)':<30} {self.grpc_metrics['service_c_time']:<25.6f} {self.xmlrpc_metrics['service_c_time']:<25.6f}")
-        print(f"{'Service D (Sort Grade)':<30} {self.grpc_metrics['service_d_time']:<25.6f} {self.xmlrpc_metrics['service_d_time']:<25.6f}")
-        print(f"{'Service E (Statistics)':<30} {self.grpc_metrics['service_e_time']:<25.6f} {self.xmlrpc_metrics['service_e_time']:<25.6f}")
+        print(f"{'MapReduce Service':<30} {self.grpc_metrics['mapreduce_time']:<25.6f} {self.xmlrpc_metrics['mapreduce_time']:<25.6f}")
+        print(f"{'MergeSort Service':<30} {self.grpc_metrics['mergesort_time']:<25.6f} {self.xmlrpc_metrics['mergesort_time']:<25.6f}")
+        print(f"{'Statistics Service':<30} {self.grpc_metrics['statistics_time']:<25.6f} {self.xmlrpc_metrics['statistics_time']:<25.6f}")
         print("-" * 80)
         print(f"{'Total Processing Time':<30} {self.grpc_metrics['total_processing_time']:<25.6f} {self.xmlrpc_metrics['total_processing_time']:<25.6f}")
         print(f"{'End-to-End Workflow Time':<30} {self.grpc_metrics['workflow_time']:<25.6f} {self.xmlrpc_metrics['workflow_time']:<25.6f}")
@@ -116,7 +114,7 @@ class ProtocolComparator:
         
         # Architecture impact
         print(f"\nArchitecture Impact:")
-        print(f"  gRPC:    Chained microservices (A→B→C→D→E→Client)")
+        print(f"  gRPC:    Chained microservices (MapReduce→MergeSort→Statistics→Client)")
         print(f"  XML-RPC: Independent service calls (Client→Server per operation)")
         
         print("\n" + "="*80)
@@ -186,8 +184,8 @@ class ProtocolComparator:
         """Generate visual comparison chart"""
         try:
             # Check if we have the new format with individual service times
-            has_service_times = ('service_a_time' in self.grpc_metrics and 
-                                'service_a_time' in self.xmlrpc_metrics)
+            has_service_times = ('mapreduce_time' in self.grpc_metrics and 
+                                'mapreduce_time' in self.xmlrpc_metrics)
             
             if has_service_times:
                 # New format: Generate detailed service-by-service comparison
@@ -204,23 +202,18 @@ class ProtocolComparator:
     def _generate_detailed_chart(self, output_file):
         """Generate detailed chart with individual service comparisons"""
         # Prepare data for charts
-        services = ['Service A\n(CGPA)', 'Service B\n(Grade)', 'Service C\n(Sort CGPA)', 
-                   'Service D\n(Sort Grade)', 'Service E\n(Stats)']
+        services = ['MapReduce\nService', 'MergeSort\nService', 'Statistics\nService']
         
         grpc_service_times = [
-            self.grpc_metrics['service_a_time'],
-            self.grpc_metrics['service_b_time'],
-            self.grpc_metrics['service_c_time'],
-            self.grpc_metrics['service_d_time'],
-            self.grpc_metrics['service_e_time']
+            self.grpc_metrics['mapreduce_time'],
+            self.grpc_metrics['mergesort_time'],
+            self.grpc_metrics['statistics_time']
         ]
         
         xmlrpc_service_times = [
-            self.xmlrpc_metrics['service_a_time'],
-            self.xmlrpc_metrics['service_b_time'],
-            self.xmlrpc_metrics['service_c_time'],
-            self.xmlrpc_metrics['service_d_time'],
-            self.xmlrpc_metrics['service_e_time']
+            self.xmlrpc_metrics['mapreduce_time'],
+            self.xmlrpc_metrics['mergesort_time'],
+            self.xmlrpc_metrics['statistics_time']
         ]
         
         # Create figure with subplots

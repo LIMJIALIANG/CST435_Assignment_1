@@ -1,5 +1,5 @@
 """
-XML-RPC Service E: Statistical Analysis (Final Service)
+XML-RPC Statistics Service: Statistical Analysis (Final Service)
 Chained Microservices Architecture
 """
 from xmlrpc.server import SimpleXMLRPCServer
@@ -23,11 +23,11 @@ class StudentObject:
         self.faculty = faculty
 
 
-class ServiceE:
-    """Service E: Statistical Analysis (Terminal Service)"""
+class StatisticsServiceHandler:
+    """Statistics Service: Statistical Analysis (Terminal Service)"""
     
     def __init__(self):
-        print(f"[Service E] Initialized (Terminal Service)")
+        print(f"[Statistics Service] Initialized (Terminal Service)")
     
     def process(self, students_data, accumulated_results):
         """
@@ -39,8 +39,8 @@ class ServiceE:
             Dictionary with all accumulated results including this service's output
         """
         try:
-            print(f"[Service E] Received from Service D")
-            print(f"[Service E] Processing {len(students_data)} students...")
+            print(f"[Statistics Service] Received from MergeSort Service")
+            print(f"[Statistics Service] Processing {len(students_data)} students...")
             start_time = time.time()
             
             # Convert dictionaries to StudentObject instances
@@ -62,46 +62,47 @@ class ServiceE:
                     serializable_stats[str(key)] = value
             
             # Add this service's result to accumulated results
-            accumulated_results['service_e'] = {
+            accumulated_results['statistics'] = {
                 'operation': 'statistical_analysis',
                 'result': serializable_stats,
                 'processing_time': processing_time
             }
             
-            print(f"[Service E] Completed in {processing_time:.4f}s")
-            print(f"[Service E] Statistics calculated")
-            print(f"[Service E] Returning final results to client...")
+            print(f"[Statistics Service] Completed in {processing_time:.4f}s")
+            print(f"[Statistics Service] Statistics calculated")
+            print(f"[Statistics Service] Chain complete: MapReduce, MergeSort, Statistics processed")
+            print(f"[Statistics Service] Returning final results to client...")
             
             # Return all accumulated results (terminal service)
             return accumulated_results
             
         except Exception as e:
-            print(f"[Service E] Error: {str(e)}")
+            print(f"[Statistics Service] Error: {str(e)}")
             raise
 
 
 def main():
-    """Start Service E server"""
-    host = os.getenv('SERVICE_E_HOST', 'localhost')
-    port = int(os.getenv('SERVICE_E_PORT', '8005'))
+    """Start Statistics Service server"""
+    host = os.getenv('STATISTICS_HOST', 'localhost')
+    port = int(os.getenv('STATISTICS_PORT', '8005'))
     
     # Create server
     server = SimpleXMLRPCServer((host, port), allow_none=True, logRequests=False)
     server.register_introspection_functions()
     
     # Register service instance
-    service = ServiceE()
-    server.register_instance(service)
+    statistics_service = StatisticsServiceHandler()
+    server.register_instance(statistics_service)
     
     print("="*70)
-    print(f"Service E (Statistical Analysis) started on {host}:{port}")
+    print(f"Statistics Service (Statistical Analysis) started on {host}:{port}")
     print("Terminal Service - Returns final results")
     print("="*70)
     
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n[Service E] Shutting down...")
+        print("\n[Statistics Service] Shutting down...")
 
 
 if __name__ == '__main__':

@@ -12,14 +12,14 @@ COPY generate_proto.py .
 
 RUN python generate_proto.py
 
-COPY grpc_implementation/server/service_d_mergesort_grade.py ./grpc_implementation/server/
+COPY grpc_implementation/server/mergesort_cgpa.py ./grpc_implementation/server/
 
 RUN mkdir -p grpc_implementation/server/generated && \
     cp grpc_implementation/server/generated/*.py grpc_implementation/server/generated/ || true
 
-ENV SERVICE_PORT=50054
-ENV SERVICE_E_ADDRESS=service-e:50055
+ENV SERVICE_PORT=50053
+ENV STATISTICS_ADDRESS=statistics:50055
 
-EXPOSE 50054
+EXPOSE 50053
 
-CMD ["python", "grpc_implementation/server/service_d_mergesort_grade.py"]
+CMD ["python", "grpc_implementation/server/mergesort_cgpa.py"]

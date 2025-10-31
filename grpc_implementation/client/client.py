@@ -1,6 +1,6 @@
 """
 Microservices Client
-Initiates workflow: Client → A → B → C → D → E → Client
+Initiates workflow: Client → MapReduce → MergeSort → Statistics → Client
 Measures end-to-end performance
 """
 
@@ -22,12 +22,12 @@ class MicroservicesClient:
     """Client that initiates the microservices chain"""
     
     def __init__(self):
-        self.service_a_address = os.getenv('SERVICE_A_ADDRESS', 'localhost:50051')
+        self.mapreduce_address = os.getenv('MAPREDUCE_ADDRESS', 'localhost:50051')
         self.students = []
         self.metrics = {
             'timestamp': datetime.now().isoformat(),
             'architecture': 'microservices_chained',
-            'workflow': 'Client → A → B → C → D → E → Client'
+            'workflow': 'Client → MapReduce → MergeSort → Statistics → Client'
         }
     
     def load_students(self, csv_path):
@@ -58,18 +58,18 @@ class MicroservicesClient:
         print("="*70)
         print("MICROSERVICES WORKFLOW")
         print("="*70)
-        print("Chain: Client → A → B → C → D → E → Client")
+        print("Chain: Client → MapReduce → MergeSort → Statistics → Client")
         print("="*70 + "\n")
         
         print(f"[Client] Starting workflow...")
-        print(f"[Client] Sending request to Service A ({self.service_a_address})\n")
+        print(f"[Client] Sending request to MapReduce Service ({self.mapreduce_address})\n")
         
         try:
-            # Connect to Service A (entry point)
-            channel = grpc.insecure_channel(self.service_a_address)
+            # Connect to MapReduce Service (entry point)
+            channel = grpc.insecure_channel(self.mapreduce_address)
             stub = student_service_pb2_grpc.StudentAnalysisServiceStub(channel)
             
-            # Send chain request to Service A
+            # Send chain request to MapReduce Service
             request = student_service_pb2.ChainRequest(
                 students=self.students,
                 partial_results=student_service_pb2.CombinedResponse()  # Empty initial results
@@ -88,34 +88,22 @@ class MicroservicesClient:
             print("WORKFLOW COMPLETED - ALL RESULTS")
             print("="*70)
             
-            # Service A Results
-            print(f"\n[Service A] MapReduce CGPA Count (Time: {combined_response.service_a_time:.4f}s)")
+            # MapReduce Service Results
+            print(f"\n[MapReduce Service] CGPA Classification (Time: {combined_response.mapreduce_time:.4f}s)")
             print("-" * 70)
+            print(f"  CGPA Classification:")
             for cgpa_range in combined_response.cgpa_ranges:
-                print(f"  {cgpa_range.range}: {cgpa_range.count} students")
+                print(f"    {cgpa_range.range}: {cgpa_range.count} students")
             
-            # Service B Results
-            print(f"\n[Service B] MapReduce Grade Distribution (Time: {combined_response.service_b_time:.4f}s)")
+            # MergeSort Service Results
+            print(f"\n[MergeSort Service] Sort by CGPA (Time: {combined_response.mergesort_time:.4f}s)")
             print("-" * 70)
-            for grade_count in combined_response.grade_counts:
-                print(f"  Grade {grade_count.grade}: {grade_count.count} students")
-            
-            # Service C Results
-            print(f"\n[Service C] MergeSort by CGPA (Time: {combined_response.service_c_time:.4f}s)")
-            print("-" * 70)
-            print(f"  Top 5 students by CGPA:")
-            for i, student in enumerate(combined_response.sorted_by_cgpa[:5], 1):
+            print(f"  Top 10 students by CGPA:")
+            for i, student in enumerate(combined_response.sorted_by_cgpa[:10], 1):
                 print(f"    {i}. {student.name} - CGPA: {student.cgpa:.2f} ({student.grade})")
             
-            # Service D Results
-            print(f"\n[Service D] MergeSort by Grade (Time: {combined_response.service_d_time:.4f}s)")
-            print("-" * 70)
-            print(f"  Top 5 students by Grade:")
-            for i, student in enumerate(combined_response.sorted_by_grade[:5], 1):
-                print(f"    {i}. {student.name} - Grade: {student.grade} (CGPA: {student.cgpa:.2f})")
-            
-            # Service E Results
-            print(f"\n[Service E] Statistical Analysis (Time: {combined_response.service_e_time:.4f}s)")
+            # Statistics Service Results
+            print(f"\n[Statistics Service] Statistical Analysis (Time: {combined_response.statistics_time:.4f}s)")
             print("-" * 70)
             print(f"  Pass Rate: {combined_response.pass_rate:.2f}%")
             print(f"\n  Faculty Statistics:")
@@ -129,27 +117,23 @@ class MicroservicesClient:
             print(f"\n{'='*70}")
             print("PERFORMANCE SUMMARY")
             print("="*70)
-            print(f"Service A Time:        {combined_response.service_a_time:.4f}s")
-            print(f"Service B Time:        {combined_response.service_b_time:.4f}s")
-            print(f"Service C Time:        {combined_response.service_c_time:.4f}s")
-            print(f"Service D Time:        {combined_response.service_d_time:.4f}s")
-            print(f"Service E Time:        {combined_response.service_e_time:.4f}s")
+            print(f"MapReduce Time:        {combined_response.mapreduce_time:.4f}s")
+            print(f"MergeSort Time:        {combined_response.mergesort_time:.4f}s")
+            print(f"Statistics Time:       {combined_response.statistics_time:.4f}s")
             print(f"Total Processing:      {combined_response.total_workflow_time:.4f}s")
             print(f"End-to-End Time:       {total_workflow_time:.4f}s")
             print(f"Network Overhead:      {(total_workflow_time - combined_response.total_workflow_time):.4f}s")
             
             # Store metrics
             self.metrics['workflow_time'] = total_workflow_time
-            self.metrics['service_a_time'] = combined_response.service_a_time
-            self.metrics['service_b_time'] = combined_response.service_b_time
-            self.metrics['service_c_time'] = combined_response.service_c_time
-            self.metrics['service_d_time'] = combined_response.service_d_time
-            self.metrics['service_e_time'] = combined_response.service_e_time
+            self.metrics['mapreduce_time'] = combined_response.mapreduce_time
+            self.metrics['mergesort_time'] = combined_response.mergesort_time
+            self.metrics['statistics_time'] = combined_response.statistics_time
             self.metrics['total_processing_time'] = combined_response.total_workflow_time
             self.metrics['network_overhead'] = total_workflow_time - combined_response.total_workflow_time
             
             print(f"\n{'='*70}")
-            print("✓ All services (A→B→C→D→E) completed successfully!")
+            print("✓ All services (MapReduce→MergeSort→Statistics) completed successfully!")
             print("="*70 + "\n")
             
             return True
@@ -176,7 +160,7 @@ def main():
     print("\n" + "="*70)
     print("MICROSERVICES CLIENT")
     print("="*70)
-    print("Architecture: 5 Connected Services (A→B→C→D→E)")
+    print("Architecture: 3 Connected Services (MapReduce→MergeSort→Statistics)")
     print("="*70 + "\n")
     
     # Initialize client

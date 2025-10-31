@@ -1,5 +1,5 @@
 """
-Service E: Statistical Analysis
+Statistics Service: Statistical Analysis
 Port: 50055
 FINAL SERVICE - Returns results to client
 """
@@ -21,27 +21,27 @@ import student_service_pb2_grpc
 from services.stats_service import StatsService
 
 
-class ServiceE(student_service_pb2_grpc.StudentAnalysisServiceServicer):
-    """Service E: Performs statistical analysis (FINAL SERVICE)"""
+class StatisticsServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceServicer):
+    """Statistics Service: Performs statistical analysis (FINAL SERVICE)"""
     
     def ProcessChain(self, request, context):
         """Process statistics and return FINAL combined results"""
-        print(f"\n[Service E] ✓ Chain request received from Service D")
-        print(f"[Service E] Analyzing {len(request.students)} students")
-        print(f"[Service E] This is the FINAL service in the chain")
+        print(f"\n[Statistics Service] ✓ Chain request received from MergeSort Service")
+        print(f"[Statistics Service] Analyzing {len(request.students)} students")
+        print(f"[Statistics Service] This is the FINAL service in the chain")
         
         try:
             start_time = time.time()
             result = StatsService.perform_analysis(list(request.students), "all")
             processing_time = time.time() - start_time
             
-            # Get accumulated results from Services A, B, C, D
+            # Get accumulated results from MapReduce, MergeSort Services
             combined = student_service_pb2.CombinedResponse()
             combined.CopyFrom(request.partial_results)
             
-            # Add Service E results (FINAL)
+            # Add Statistics Service results (FINAL)
             combined.pass_rate = result['pass_rate']
-            combined.service_e_time = processing_time
+            combined.statistics_time = processing_time
             
             for faculty_stat in result['faculty_stats']:
                 stat = combined.faculty_stats.add()
@@ -57,21 +57,19 @@ class ServiceE(student_service_pb2_grpc.StudentAnalysisServiceServicer):
             
             # Calculate total workflow time
             combined.total_workflow_time = (
-                combined.service_a_time + 
-                combined.service_b_time + 
-                combined.service_c_time + 
-                combined.service_d_time + 
-                combined.service_e_time
+                combined.mapreduce_time + 
+                combined.mergesort_time + 
+                combined.statistics_time
             )
             
-            print(f"[Service E] ✓ Completed in {processing_time:.4f}s")
-            print(f"[Service E] ✓ All services completed! Chain: A→B→C→D→E")
-            print(f"[Service E] ✓ Returning FINAL combined results to client\n")
+            print(f"[Statistics Service] ✓ Completed in {processing_time:.4f}s")
+            print(f"[Statistics Service] ✓ All services completed! Chain: MapReduce→MergeSort→Statistics")
+            print(f"[Statistics Service] ✓ Returning FINAL combined results to client\n")
             
             return combined
             
         except Exception as e:
-            print(f"[Service E] ✗ Error: {e}")
+            print(f"[Statistics Service] ✗ Error: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
             return student_service_pb2.CombinedResponse()
 
@@ -79,12 +77,12 @@ class ServiceE(student_service_pb2_grpc.StudentAnalysisServiceServicer):
 def serve():
     port = int(os.getenv('SERVICE_PORT', '50055'))
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(ServiceE(), server)
+    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(StatisticsServiceHandler(), server)
     server.add_insecure_port(f'[::]:{port}')
     server.start()
     
     print("="*60)
-    print("SERVICE E: Statistical Analysis (FINAL)")
+    print("STATISTICS SERVICE: Statistical Analysis (FINAL)")
     print("="*60)
     print(f"Port: {port}")
     print("Status: RUNNING")
@@ -93,7 +91,7 @@ def serve():
     try:
         server.wait_for_termination()
     except KeyboardInterrupt:
-        print("\n[Service E] Shutting down...")
+        print("\n[Statistics Service] Shutting down...")
         server.stop(0)
 
 

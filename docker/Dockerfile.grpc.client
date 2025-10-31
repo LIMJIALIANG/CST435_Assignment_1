@@ -18,7 +18,7 @@ COPY grpc_implementation/client/client.py ./grpc_implementation/client/
 RUN mkdir -p grpc_implementation/client/generated && \
     cp grpc_implementation/client/generated/*.py grpc_implementation/client/generated/ || true
 
-ENV SERVICE_A_ADDRESS=service-a:50051
+ENV MAPREDUCE_HOST=service-a:50051
 ENV OUTPUT_FILE=/app/results/grpc_docker_performance_metrics.json
 
 # Wait for services to be ready, then run client

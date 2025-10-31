@@ -14,7 +14,7 @@ if exist "%PROJECT_ROOT%\.venv\Scripts\activate.bat" (
 )
 
 REM Run client
-echo Initiating workflow: Client - A - B - C - D - E
+echo Initiating workflow: Client → MapReduce → MergeSort → Statistics
 echo.
 python "%SCRIPT_DIR%\client.py"
 

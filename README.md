@@ -2,10 +2,28 @@
 
 ## Problem Statement
 This project implements a distributed student marks analysis system using **gRPC microservices architecture** and **XML-RPC** for protocol comparison. The system performs:
-1. **MapReduce**: Count CGPA ranges and grade distributions
-2. **Merge Sort**: Rank students by grades
+1. **MapReduce**: Count CGPA-based grade classifications and grade distributions
+2. **Merge Sort**: Rank students by CGPA and grades
 3. **Statistical Analysis**: Calculate average CGPA per faculty, grade distribution, and pass rates
 4. **Protocol Comparison**: Performance analysis between gRPC (binary) and XML-RPC (text-based)
+
+### Grading Scale
+Based on official university grading system (descending order):
+| Grade | Marks Range | CGPA Point | Classification |
+|-------|-------------|------------|----------------|
+| A     | 80-100     | 4.00       | Pass with distinction |
+| B+    | 70-79      | 3.67       | Pass with credit |
+| B     | 58-63      | 3.00       | Satisfactory pass |
+| B-    | 65-69      | 2.67       | Satisfactory pass |
+| C+    | 55-59      | 2.33       | Fail (for core courses) |
+| C     | 50-54      | 2.00       | Pass (for elective courses) |
+| C-    | 47-49      | 1.67       | |
+| D+    | 44-46      | 1.33       | |
+| D     | 40-43      | 1.00       | Fail |
+| D-    | 30-39      | 0.67       | Fail |
+| F     | 0-24       | 0.00       | Fail |
+
+**Note**: MapReduce service uses CGPA thresholds to classify students into grade categories.
 
 ## Architecture
 
@@ -13,50 +31,48 @@ This project implements a distributed student marks analysis system using **gRPC
 The gRPC implementation uses a **microservices architecture with service chaining**, where each service performs a specific task and forwards the request to the next service:
 
 ```
-Client → Service A → Service B → Service C → Service D → Service E → Client
-         (MapReduce  (MapReduce  (MergeSort  (MergeSort  (Statistics)
-          CGPA)       Grade)      CGPA)       Grade)
+Client → MapReduce → MergeSort → Statistics → Client
+         (CGPA +     (CGPA +      (Statistical
+          Grade       Grade        Analysis)
+          Classification) Sorting)
 ```
 
 **Service Chain Details:**
-- **Service A** (Port 50051): MapReduce CGPA counting → forwards to Service B
-- **Service B** (Port 50052): MapReduce Grade distribution → forwards to Service C
-- **Service C** (Port 50053): MergeSort by CGPA → forwards to Service D
-- **Service D** (Port 50054): MergeSort by Grade → forwards to Service E
-- **Service E** (Port 50055): Statistical Analysis → returns aggregated results to client
+- **MapReduce Service** (Port 50051): CGPA-based Grade Classification + Grade Distribution → forwards to MergeSort
+- **MergeSort Service** (Port 50053): Sort by CGPA + Sort by Grade → forwards to Statistics
+- **Statistics Service** (Port 50055): Statistical Analysis → returns aggregated results to client
 
 **Key Features:**
 - Each service is an independent server on a different port
 - Services communicate via gRPC (Protocol Buffers)
-- Data flows through the entire chain: Client calls Service A, which calls Service B, and so on
+- Data flows through the entire chain: Client calls MapReduce, which calls MergeSort, then Statistics
 - **Result Aggregation**: Each service accumulates results and forwards them downstream
-- **Complete Results**: Client receives results from all 5 services in a single response
+- **Complete Results**: Client receives results from all 3 services in a single response
 - Simulates distributed containers across multiple servers
 - Performance metrics captured for each service and end-to-end workflow
 
 ### XML-RPC Microservices Architecture (Service Chaining)
-The XML-RPC implementation now uses the **same chained microservices architecture** as gRPC for fair comparison:
+The XML-RPC implementation uses the **same chained microservices architecture** as gRPC for fair comparison:
 
 ```
-Client → Service A → Service B → Service C → Service D → Service E → Client
-         (MapReduce  (MapReduce  (MergeSort  (MergeSort  (Statistics)
-          CGPA)       Grade)      CGPA)       Grade)      Port 8005
-         Port 8001)  Port 8002)  Port 8003)  Port 8004)
+Client → MapReduce → MergeSort → Statistics → Client
+         (CGPA +     (CGPA +      (Statistical
+          Grade       Grade        Analysis)
+          Classification) Sorting)   Port 8005
+         Port 8001)  Port 8003)
 ```
 
 **Service Chain Details:**
-- **Service A** (Port 8001): MapReduce CGPA counting → forwards to Service B
-- **Service B** (Port 8002): MapReduce Grade distribution → forwards to Service C
-- **Service C** (Port 8003): MergeSort by CGPA → forwards to Service D
-- **Service D** (Port 8004): MergeSort by Grade → forwards to Service E
-- **Service E** (Port 8005): Statistical Analysis → returns aggregated results to client
+- **MapReduce Service** (Port 8001): CGPA-based Grade Classification + Grade Distribution → forwards to MergeSort
+- **MergeSort Service** (Port 8003): Sort by CGPA + Sort by Grade → forwards to Statistics
+- **Statistics Service** (Port 8005): Statistical Analysis → returns aggregated results to client
 
 **Key Features:**
 - **Identical Architecture to gRPC**: Both use chained microservices pattern
 - **Protocol**: XML-RPC over HTTP
 - **Serialization**: XML (text-based, human-readable)
 - **Transport**: HTTP/1.1
-- **Port Range**: 8001-8005
+- **Port Range**: 8001, 8003, 8005
 - **Use Case**: Protocol performance comparison with identical architecture
 
 ## Project Structure
@@ -67,28 +83,24 @@ Client → Service A → Service B → Service C → Service D → Service E →
 │   ├── proto/                   # Protocol Buffer definitions
 │   │   └── student_service.proto
 │   │
-│   ├── server/                  # Microservices (A, B, C, D, E)
-│   │   ├── service_a_mapreduce_cgpa.py    # Service A (Port 50051)
-│   │   ├── service_b_mapreduce_grade.py   # Service B (Port 50052)
-│   │   ├── service_c_mergesort_cgpa.py    # Service C (Port 50053)
-│   │   ├── service_d_mergesort_grade.py   # Service D (Port 50054)
-│   │   ├── service_e_statistics.py        # Service E (Port 50055)
+│   ├── server/                  # Microservices (MapReduce, MergeSort, Statistics)
+│   │   ├── mapreduce_cgpa.py       # MapReduce service (Port 50051)
+│   │   ├── mergesort_cgpa.py       # MergeSort service (Port 50053)
+│   │   ├── statistics.py          # Statistics service (Port 50055)
 │   │   ├── start_all_services.ps1/.bat    # Launch all services
 │   │   └── generated/                     # Generated gRPC code
 │   │
 │   └── client/                  # Microservices Client
-│       ├── client.py                      # Initiates workflow at Service A
+│       ├── client.py                      # Initiates workflow at MapReduce Service
 │       ├── run_client.ps1/.bat            # Run client script
 │       └── generated/                     # Generated gRPC code
 │
 ├── 🔧 xmlrpc_implementation/    # XML-RPC Microservices Implementation
-│   ├── server/                  # XML-RPC Microservices (A, B, C, D, E)
-│   │   ├── service_a.py         # Service A (Port 8001)
-│   │   ├── service_b.py         # Service B (Port 8002)
-│   │   ├── service_c.py         # Service C (Port 8003)
-│   │   ├── service_d.py         # Service D (Port 8004)
-│   │   ├── service_e.py         # Service E (Port 8005)
-│   │   ├── start_all_services.ps1  # Launch all 5 services
+│   ├── server/                  # XML-RPC Microservices (MapReduce, MergeSort, Statistics)
+│   │   ├── mapreduce.py         # MapReduce Service (Port 8001)
+│   │   ├── mergesort.py         # MergeSort Service (Port 8003)
+│   │   ├── statistics.py        # Statistics Service (Port 8005)
+│   │   ├── start_all_services.ps1  # Launch all 3 services
 │   │   └── start_all_services.bat
 │   └── client/                  # XML-RPC Client
 │       ├── client.py
@@ -104,19 +116,15 @@ Client → Service A → Service B → Service C → Service D → Service E →
 │   └── students.csv
 │
 ├── 🐳 docker/                   # Docker configurations
-│   ├── Dockerfile.grpc.service_a              # gRPC Service A container
-│   ├── Dockerfile.grpc.service_b              # gRPC Service B container
-│   ├── Dockerfile.grpc.service_c              # gRPC Service C container
-│   ├── Dockerfile.grpc.service_d              # gRPC Service D container
-│   ├── Dockerfile.grpc.service_e              # gRPC Service E container
+│   ├── Dockerfile.grpc.mapreduce          # gRPC MapReduce service container
+│   ├── Dockerfile.grpc.mergesort          # gRPC MergeSort service container
+│   ├── Dockerfile.grpc.statistics         # gRPC Statistics service container
 │   ├── Dockerfile.grpc.client   # gRPC client container
 │   ├── docker-compose.grpc.yml  # gRPC Docker Compose
 │   │
-│   ├── Dockerfile.xmlrpc.service_a       # XML-RPC Service A container
-│   ├── Dockerfile.xmlrpc.service_b       # XML-RPC Service B container
-│   ├── Dockerfile.xmlrpc.service_c       # XML-RPC Service C container
-│   ├── Dockerfile.xmlrpc.service_d       # XML-RPC Service D container
-│   ├── Dockerfile.xmlrpc.service_e       # XML-RPC Service E container
+│   ├── Dockerfile.xmlrpc.mapreduce       # XML-RPC MapReduce service container
+│   ├── Dockerfile.xmlrpc.mergesort       # XML-RPC MergeSort service container
+│   ├── Dockerfile.xmlrpc.statistics      # XML-RPC Statistics service container
 │   ├── Dockerfile.xmlrpc.client          # XML-RPC client container
 │   └── docker-compose.xmlrpc.yml         # XML-RPC Docker Compose
 │
@@ -130,9 +138,9 @@ Client → Service A → Service B → Service C → Service D → Service E →
 
 
 ## Features
-- **Microservices Architecture**: 5 independent services simulating distributed containers
-- **Service Chaining with Result Aggregation**: Data and results flow sequentially A → B → C → D → E
-- **Complete Result Visibility**: Client receives aggregated results from all 5 services
+- **Microservices Architecture**: 3 independent services simulating distributed containers
+- **Service Chaining with Result Aggregation**: Data and results flow sequentially MapReduce → MergeSort → Statistics
+- **Complete Result Visibility**: Client receives aggregated results from all 3 services
 - **MapReduce Operations**: Parallel processing of CGPA and grade counting
 - **Merge Sort**: Distributed sorting for student rankings
 - **Statistical Analysis**: Grade distribution, pass rates, average CGPA per faculty
@@ -162,19 +170,17 @@ The gRPC implementation offers **two deployment methods** to test different scen
 
 ### Method 1: Native Python (Convenience Scripts) ⭐ EASIEST
 
-This method runs all 5 services locally on different ports, simulating distributed containers.
+This method runs all 3 services locally on different ports, simulating distributed containers.
 
 ```powershell
-# Terminal 1: Start all 5 microservices
+# Terminal 1: Start all 3 microservices
 cd grpc_implementation\server
 .\start_all_services.ps1    # or start_all_services.bat
 
-# This will open 5 terminal windows:
-# - Service A: localhost:50051 (MapReduce CGPA)
-# - Service B: localhost:50052 (MapReduce Grade)
-# - Service C: localhost:50053 (MergeSort CGPA)
-# - Service D: localhost:50054 (MergeSort Grade)
-# - Service E: localhost:50055 (Statistics)
+# This will open 3 terminal windows:
+# - MapReduce Service: localhost:50051 (CGPA-based Grade Classification)
+# - MergeSort Service: localhost:50053 (Sort by CGPA + Grade)
+# - Statistics Service: localhost:50055 (Statistical Analysis)
 
 # Terminal 2: Run the microservices client
 cd grpc_implementation\client
@@ -184,20 +190,16 @@ cd grpc_implementation\client
 ```
 
 **What happens:**
-1. Client calls Service A with the initial request
-2. Service A processes MapReduce CGPA → forwards accumulated results to Service B
-3. Service B processes MapReduce Grade → forwards accumulated results to Service C
-4. Service C processes MergeSort CGPA → forwards accumulated results to Service D
-5. Service D processes MergeSort Grade → forwards accumulated results to Service E
-6. Service E processes Statistics → returns **complete aggregated results** from all services
-7. Client displays results from all 5 services and measures performance metrics
+1. Client calls MapReduce Service with the initial request
+2. MapReduce Service processes CGPA-based Grade Classification + Grade Distribution → forwards accumulated results to MergeSort
+3. MergeSort Service processes Sort by CGPA + Sort by Grade → forwards accumulated results to Statistics
+4. Statistics Service performs Statistical Analysis → returns **complete aggregated results** from all services
+5. Client displays results from all 3 services and measures performance metrics
 
 **Results displayed:**
-- Service A: CGPA count by ranges
-- Service B: Grade distribution
-- Service C: Top students sorted by CGPA
-- Service D: Top students sorted by grade
-- Service E: Statistical analysis (pass rate, faculty averages)
+- MapReduce Service: Grade classification count (A, B+, B, B-, C+, C, C-, D+, D, D-, F) + Grade distribution
+- MergeSort Service: Top students sorted by CGPA + Top students sorted by grade
+- Statistics Service: Statistical analysis (pass rate, faculty averages)
 - Performance: Individual service times + total workflow time + network overhead
 
 ---
@@ -238,11 +240,9 @@ cd xmlrpc_implementation\server
 .\start_all_services.ps1
 
 # This will open 5 terminal windows:
-# - Service A: localhost:8001 (MapReduce CGPA)
-# - Service B: localhost:8002 (MapReduce Grade)
-# - Service C: localhost:8003 (MergeSort CGPA)
-# - Service D: localhost:8004 (MergeSort Grade)
-# - Service E: localhost:8005 (Statistics)
+# - MapReduce Service: localhost:8001 (CGPA-based Grade Classification + Grade Distribution)
+# - MergeSort Service: localhost:8003 (Sort CGPA + Sort Grade)
+# - Statistics Service: localhost:8005 (Statistical Analysis)
 
 # Terminal 2: Run XML-RPC client
 cd xmlrpc_implementation\client
@@ -252,13 +252,11 @@ cd xmlrpc_implementation\client
 ```
 
 **What happens:**
-1. Client calls Service A (port 8001) with the initial request
-2. Service A processes MapReduce CGPA → forwards to Service B
-3. Service B processes MapReduce Grade → forwards to Service C
-4. Service C processes MergeSort CGPA → forwards to Service D
-5. Service D processes MergeSort Grade → forwards to Service E
-6. Service E processes Statistics → returns **complete aggregated results**
-7. Client displays results from all 5 services and measures performance
+1. Client calls MapReduce Service (port 8001) with the initial request
+2. MapReduce Service processes CGPA-based Grade Classification + Grade Distribution → forwards to MergeSort
+3. MergeSort Service processes Sort by CGPA + Sort by Grade → forwards to Statistics
+4. Statistics Service performs Statistical Analysis → returns **complete aggregated results**
+5. Client displays results from all 3 services and measures performance
 
 ---
 
@@ -279,11 +277,11 @@ docker-compose -f docker-compose.xmlrpc.yml down
 ```
 
 **Container architecture:**
-- 5 service containers (xmlrpc-service-a through xmlrpc-service-e)
+- 3 service containers (xmlrpc-mapreduce, xmlrpc-mergesort, xmlrpc-statistics)
 - 1 client container
 - Bridge network for inter-service communication
-- Services start in reverse order (E→D→C→B→A) to ensure downstream services are ready
-- Environment variables for service addresses (e.g., SERVICE_B_URL=http://xmlrpc-service-b:8002)
+- Services start in reverse order (Statistics→MergeSort→MapReduce) to ensure downstream services are ready
+- Environment variables for service addresses (e.g., SERVICE_C_URL=http://xmlrpc-mergesort:8003)
 
 ---
 
@@ -293,23 +291,17 @@ docker-compose -f docker-compose.xmlrpc.yml down
 # Activate virtual environment
 .\.venv\Scripts\Activate.ps1
 
-# Terminal 1: Start Service E (terminal service first)
+# Terminal 1: Start Statistics service (terminal service first)
 cd xmlrpc_implementation\server
-python service_e.py
+python statistics.py
 
-# Terminal 2: Start Service D
-python service_d.py
+# Terminal 2: Start MergeSort service
+python mergesort.py
 
-# Terminal 3: Start Service C
-python service_c.py
+# Terminal 3: Start MapReduce service (entry point)
+python mapreduce.py
 
-# Terminal 4: Start Service B
-python service_b.py
-
-# Terminal 5: Start Service A (entry point)
-python service_a.py
-
-# Terminal 6: Run client
+# Terminal 4: Run client
 cd xmlrpc_implementation\client
 python client.py
 ```
@@ -338,7 +330,7 @@ python tools\compare_protocols.py
 - Network overhead
 - Latency per operation
 - End-to-end workflow time
-- **Fair Architecture**: Both use identical chained microservices (A → B → C → D → E)
+- **Fair Architecture**: Both use identical chained microservices (MapReduce → MergeSort → Statistics)
 - **Protocol Performance**: Pure comparison of gRPC vs XML-RPC protocols
 
 ---
@@ -464,13 +456,11 @@ Results are saved in `results/performance_metrics.json`
 {
   "timestamp": "2025-10-30T...",
   "architecture": "microservices_chained",
-  "workflow": "Client → A → B → C → D → E → Client",
+  "workflow": "Client → MapReduce → MergeSort → Statistics → Client",
   "workflow_time": 0.1284,
-  "service_a_time": 0.0065,
-  "service_b_time": 0.0047,
-  "service_c_time": 0.0002,
-  "service_d_time": 0.0002,
-  "service_e_time": 0.0002,
+  "mapreduce_time": 0.0112,
+  "mergesort_time": 0.0004,
+  "statistics_time": 0.0002,
   "total_processing_time": 0.0118,
   "network_overhead": 0.1166
 }
@@ -482,25 +472,23 @@ Results are saved in `results/performance_metrics.json`
   "timestamp": "2025-10-30T...",
   "protocol": "XML-RPC",
   "architecture": "microservices_chained",
-  "service_a_url": "http://localhost:8001",
+  "mapreduce_url": "http://localhost:8001",
   "workflow_time": 0.1234,
-  "service_a_time": 0.0123,
-  "service_b_time": 0.0234,
-  "service_c_time": 0.0345,
-  "service_d_time": 0.0456,
-  "service_e_time": 0.0567,
+  "mapreduce_time": 0.0357,
+  "mergesort_time": 0.0801,
+  "statistics_time": 0.0567,
   "total_processing_time": 0.1725,
   "network_overhead": 0.0109,
   "summary": {
-    "total_services": 5,
-    "avg_service_time": 0.0345,
+    "total_services": 3,
+    "avg_service_time": 0.0575,
     "overhead_percentage": 8.83
   }
 }
 ```
 
 **Comparison Summary:**
-- Both use **identical chained microservices architecture** (A → B → C → D → E)
+- Both use **identical chained microservices architecture** (MapReduce → MergeSort → Statistics)
 - gRPC uses binary Protocol Buffers serialization
 - XML-RPC uses text-based XML serialization
 - **Fair protocol comparison** with same architecture and operations
@@ -513,16 +501,16 @@ Results are saved in `results/performance_metrics.json`
 
 ### gRPC Microservices Implementation
 - `grpc_implementation/proto/student_service.proto` - Protocol Buffer definitions with CombinedResponse
-- `grpc_implementation/server/service_a_mapreduce_cgpa.py` - Service A (MapReduce CGPA)
-- `grpc_implementation/server/service_b_mapreduce_grade.py` - Service B (MapReduce Grade)
-- `grpc_implementation/server/service_c_mergesort_cgpa.py` - Service C (MergeSort CGPA)
-- `grpc_implementation/server/service_d_mergesort_grade.py` - Service D (MergeSort Grade)
-- `grpc_implementation/server/service_e_statistics.py` - Service E (Statistics)
+- `grpc_implementation/server/mapreduce_cgpa.py` - MapReduce Service (CGPA + Grade Classification)
+- `grpc_implementation/server/mergesort_cgpa.py` - MergeSort Service (Sort CGPA + Grade)
+- `grpc_implementation/server/statistics.py` - Statistics Service (Statistical Analysis)
 - `grpc_implementation/client/client.py` - Microservices client
 - `generate_proto.py` - Generates gRPC code from .proto files
 
 ### XML-RPC Implementation
-- `xmlrpc_implementation/server/server.py` - XML-RPC server
+- `xmlrpc_implementation/server/mapreduce.py` - MapReduce Service (Port 8001)
+- `xmlrpc_implementation/server/mergesort.py` - MergeSort Service (Port 8003)
+- `xmlrpc_implementation/server/statistics.py` - Statistics Service (Port 8005)
 - `xmlrpc_implementation/client/client.py` - XML-RPC client
 
 ### Shared Components

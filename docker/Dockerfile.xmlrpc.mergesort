@@ -1,4 +1,4 @@
-# Dockerfile for XML-RPC Service B (MapReduce Grade Count)
+# Dockerfile for XML-RPC MergeSort Service (Sort CGPA and Grade)
 FROM python:3.13-slim
 
 WORKDIR /app
@@ -10,15 +10,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy shared services
 COPY services/ /app/services/
 
-# Copy Service B
-COPY xmlrpc_implementation/server/service_b.py /app/xmlrpc_implementation/server/
+# Copy MergeSort Service
+COPY xmlrpc_implementation/server/mergesort.py /app/xmlrpc_implementation/server/
 
 ENV PYTHONUNBUFFERED=1
-ENV SERVICE_B_HOST=0.0.0.0
-ENV SERVICE_B_PORT=8002
+ENV MERGESORT_HOST=0.0.0.0
+ENV MERGESORT_PORT=8003
 
-EXPOSE 8002
+EXPOSE 8003
 
 WORKDIR /app/xmlrpc_implementation/server
 
-CMD ["python", "service_b.py"]
+CMD ["python", "mergesort.py"]

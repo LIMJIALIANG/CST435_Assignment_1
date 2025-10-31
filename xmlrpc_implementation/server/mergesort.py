@@ -1,5 +1,5 @@
 """
-XML-RPC Service D: MergeSort by Grade
+XML-RPC MergeSort Service: Sort by CGPA and Grade
 Chained Microservices Architecture
 """
 from xmlrpc.server import SimpleXMLRPCServer
@@ -24,16 +24,16 @@ class StudentObject:
         self.faculty = faculty
 
 
-class ServiceD:
-    """Service D: Sort by Grade using MergeSort"""
+class MergeSortServiceHandler:
+    """MergeSort Service: Sort by CGPA and Grade using MergeSort"""
     
     def __init__(self, next_service_url):
         self.next_service_url = next_service_url
-        print(f"[Service D] Initialized. Next service: {next_service_url}")
+        print(f"[MergeSort Service] Initialized. Next service: {next_service_url}")
     
     def process(self, students_data, accumulated_results):
         """
-        Process sort by Grade and forward to next service
+        Process sort by CGPA and forward to next service
         Args:
             students_data: List of student dictionaries
             accumulated_results: Dictionary containing results from previous services
@@ -41,20 +41,20 @@ class ServiceD:
             Dictionary with accumulated results including this service's output
         """
         try:
-            print(f"[Service D] Received from Service C")
-            print(f"[Service D] Processing {len(students_data)} students...")
-            start_time = time.time()
+            print(f"[MergeSort Service] Received from MapReduce Service")
+            print(f"[MergeSort Service] Processing {len(students_data)} students...")
             
             # Convert dictionaries to StudentObject instances
             students = [StudentObject(**student) for student in students_data]
             
-            # Perform MergeSort by Grade
-            result = MergeSortService.perform_sort(students, "grade")
-            sorted_students = result['sorted_students']
-            
+            # Perform MergeSort by CGPA
+            print(f"[MergeSort Service] Performing MergeSort by CGPA...")
+            start_time = time.time()
+            sort_result = MergeSortService.perform_sort(students)
+            sorted_students = sort_result['sorted_students']
             processing_time = time.time() - start_time
             
-            # Convert sorted students back to dictionaries for transmission
+            # Convert sorted students to dictionaries (Top 10 for display)
             sorted_data = [
                 {
                     'student_id': str(s.student_id),
@@ -63,56 +63,55 @@ class ServiceD:
                     'cgpa': float(s.cgpa),
                     'grade': str(s.grade)
                 }
-                for s in sorted_students[:5]  # Top 5 for display
+                for s in sorted_students[:10]
             ]
             
-            # Add this service's result to accumulated results
-            accumulated_results['service_d'] = {
-                'operation': 'sort_by_grade',
-                'result': {
-                    'sorted_count': len(sorted_students),
-                    'top_5': sorted_data
-                },
+            # Add MergeSort Service result to accumulated results
+            accumulated_results['mergesort'] = {
+                'sorted_count': len(sorted_students),
+                'top_10': sorted_data,
                 'processing_time': processing_time
             }
             
-            print(f"[Service D] Completed in {processing_time:.4f}s")
-            print(f"[Service D] Sorted {len(sorted_students)} students by Grade")
-            print(f"[Service D] Forwarding to Service E...")
+            print(f"[MergeSort Service] Sort completed in {processing_time:.4f}s")
+            print(f"[MergeSort Service] Forwarding to Statistics Service...")
             
-            # Forward to next service in chain (final service)
+            # Forward to next service in chain
             next_service = ServerProxy(self.next_service_url, allow_none=True)
             return next_service.process(students_data, accumulated_results)
             
         except Exception as e:
-            print(f"[Service D] Error: {str(e)}")
+            print(f"[MergeSort Service] Error: {str(e)}")
             raise
 
 
 def main():
-    """Start Service D server"""
-    host = os.getenv('SERVICE_D_HOST', 'localhost')
-    port = int(os.getenv('SERVICE_D_PORT', '8004'))
-    service_e_url = os.getenv('SERVICE_E_URL', 'http://localhost:8005')
+    """Start MergeSort Service server"""
+    host = os.getenv('MERGESORT_HOST', 'localhost')
+    port = int(os.getenv('MERGESORT_PORT', '8003'))
+    statistics_url = os.getenv('STATISTICS_URL', 'http://localhost:8005')
     
     # Create server
     server = SimpleXMLRPCServer((host, port), allow_none=True, logRequests=False)
     server.register_introspection_functions()
     
-    # Register service instance
-    service = ServiceD(service_e_url)
-    server.register_instance(service)
+    # Register MergeSort Service
+    mergesort_service = MergeSortServiceHandler(statistics_url)
+    server.register_instance(mergesort_service)
     
-    print("="*70)
-    print(f"Service D (Sort by Grade) started on {host}:{port}")
-    print(f"Next service: {service_e_url}")
-    print("="*70)
+    print("=" * 60)
+    print("XML-RPC MERGESORT SERVICE: Sort CGPA + Grade")
+    print("Operations: Sort by CGPA, Sort by Grade")
+    print(f"Server running on {host}:{port}")
+    print(f"Next service: {statistics_url}")
+    print("=" * 60)
     
     try:
         server.serve_forever()
     except KeyboardInterrupt:
-        print("\n[Service D] Shutting down...")
+        print("\n[MergeSort Service] Shutting down...")
 
 
 if __name__ == '__main__':
     main()
+

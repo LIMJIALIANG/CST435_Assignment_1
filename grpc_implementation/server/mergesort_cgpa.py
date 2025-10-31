@@ -1,7 +1,7 @@
 """
-Service D: MergeSort by Grade
-Port: 50054
-Chains to: Service E (50055)
+MergeSort Service: Sort by CGPA
+Port: 50053
+Chains to: Statistics Service (50055)
 """
 
 import sys
@@ -21,36 +21,38 @@ import student_service_pb2_grpc
 from services.mergesort_service import MergeSortService
 
 
-class ServiceD(student_service_pb2_grpc.StudentAnalysisServiceServicer):
-    """Service D: Sorts by grade and forwards to Service E"""
+class MergeSortServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceServicer):
+    """MergeSort Service: Sorts by CGPA, forwards to Statistics Service"""
     
     def __init__(self):
-        self.next_service = os.getenv('SERVICE_E_ADDRESS', 'localhost:50055')
-        print(f"[Service D] Next service: {self.next_service}")
+        self.next_service = os.getenv('STATISTICS_ADDRESS', 'localhost:50055')
+        print(f"[MergeSort Service] Next service: {self.next_service}")
     
     def ProcessChain(self, request, context):
-        """Process grade sort and forward chain to Service E (final)"""
-        print(f"\n[Service D] ✓ Chain request received from Service C")
-        print(f"[Service D] Sorting {len(request.students)} students by grade")
+        """Process CGPA sort, forward chain to Statistics Service"""
+        print(f"\n[MergeSort Service] ✓ Chain request received from MapReduce Service")
+        print(f"[MergeSort Service] Sorting {len(request.students)} students")
         
         try:
+            # Sort by CGPA
             start_time = time.time()
-            result = MergeSortService.perform_sort(list(request.students), "grade")
+            cgpa_result = MergeSortService.perform_sort(list(request.students))
             processing_time = time.time() - start_time
             
-            # Get accumulated results from Services A, B, C
+            # Get accumulated results from MapReduce Service
             combined = student_service_pb2.CombinedResponse()
             combined.CopyFrom(request.partial_results)
             
-            # Add Service D results
-            for student in result['sorted_students']:
-                combined.sorted_by_grade.append(student)
-            combined.service_d_time = processing_time
+            # Add MergeSort Service results (CGPA sort only)
+            for student in cgpa_result['sorted_students']:
+                combined.sorted_by_cgpa.append(student)
             
-            print(f"[Service D] ✓ Completed in {processing_time:.4f}s")
-            print(f"[Service D] → Forwarding to Service E (FINAL)...")
+            combined.mergesort_time = processing_time
             
-            # Forward to Service E (final service)
+            print(f"[MergeSort Service] ✓ Sort completed in {processing_time:.4f}s")
+            print(f"[MergeSort Service] → Forwarding to Statistics Service...")
+            
+            # Forward to Statistics Service
             try:
                 channel = grpc.insecure_channel(self.next_service)
                 stub = student_service_pb2_grpc.StudentAnalysisServiceStub(channel)
@@ -60,41 +62,42 @@ class ServiceD(student_service_pb2_grpc.StudentAnalysisServiceServicer):
                     partial_results=combined
                 )
                 
-                # Wait for final combined results from Service E
+                # Wait for combined results from Statistics Service
                 final_response = stub.ProcessChain(next_request, timeout=60)
                 channel.close()
                 
-                print(f"[Service D] ✓ Received FINAL combined results from Service E\n")
+                print(f"[MergeSort Service] ✓ Received combined results from downstream services\n")
                 return final_response
                 
             except Exception as e:
-                print(f"[Service D] ✗ Failed to forward to Service E: {e}\n")
+                print(f"[MergeSort Service] ✗ Failed to forward to Statistics Service: {e}\n")
                 return combined
             
         except Exception as e:
-            print(f"[Service D] ✗ Error: {e}")
+            print(f"[MergeSort Service] ✗ Error: {e}")
             context.set_code(grpc.StatusCode.INTERNAL)
             return student_service_pb2.CombinedResponse()
 
 
 def serve():
-    port = int(os.getenv('SERVICE_PORT', '50054'))
+    port = int(os.getenv('SERVICE_PORT', '50053'))
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(ServiceD(), server)
+    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(MergeSortServiceHandler(), server)
     server.add_insecure_port(f'[::]:{port}')
     server.start()
     
     print("="*60)
-    print("SERVICE D: MergeSort by Grade")
+    print("MERGESORT SERVICE: Sort by CGPA")
     print("="*60)
     print(f"Port: {port}")
     print("Status: RUNNING")
+    print("Operation: Sort by CGPA")
     print("="*60 + "\n")
     
     try:
         server.wait_for_termination()
     except KeyboardInterrupt:
-        print("\n[Service D] Shutting down...")
+        print("\n[MergeSort Service] Shutting down...")
         server.stop(0)
 
 

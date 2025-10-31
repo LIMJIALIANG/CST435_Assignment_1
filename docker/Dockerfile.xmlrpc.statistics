@@ -1,4 +1,4 @@
-# Dockerfile for XML-RPC Service A (MapReduce CGPA Count)
+# Dockerfile for XML-RPC Statistics Service (Statistical Analysis)
 FROM python:3.13-slim
 
 WORKDIR /app
@@ -10,15 +10,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy shared services
 COPY services/ /app/services/
 
-# Copy Service A
-COPY xmlrpc_implementation/server/service_a.py /app/xmlrpc_implementation/server/
+# Copy Statistics Service
+COPY xmlrpc_implementation/server/statistics.py /app/xmlrpc_implementation/server/
 
 ENV PYTHONUNBUFFERED=1
-ENV SERVICE_A_HOST=0.0.0.0
-ENV SERVICE_A_PORT=8001
+ENV STATISTICS_HOST=0.0.0.0
+ENV STATISTICS_PORT=8005
 
-EXPOSE 8001
+EXPOSE 8005
 
 WORKDIR /app/xmlrpc_implementation/server
 
-CMD ["python", "service_a.py"]
+CMD ["python", "statistics.py"]

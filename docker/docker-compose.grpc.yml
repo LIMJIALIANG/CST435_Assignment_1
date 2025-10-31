@@ -1,82 +1,50 @@
 version: '3.8'
 
 services:
-  grpc-service-a:
+  grpc-mapreduce:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.grpc.service_a
-    container_name: grpc-service-a
+      dockerfile: docker/Dockerfile.grpc.mapreduce
+    container_name: grpc-mapreduce
     environment:
-      - SERVICE_PORT=50051
-      - SERVICE_B_ADDRESS=grpc-service-b:50052
+      - MAPREDUCE_PORT=50051
+      - MERGESORT_ADDRESS=grpc-mergesort:50053
     ports:
       - "50051:50051"
     networks:
       - grpc-network
     restart: unless-stopped
 
-  grpc-service-b:
+  grpc-mergesort:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.grpc.service_b
-    container_name: grpc-service-b
+      dockerfile: docker/Dockerfile.grpc.mergesort
+    container_name: grpc-mergesort
     environment:
-      - SERVICE_PORT=50052
-      - SERVICE_C_ADDRESS=grpc-service-c:50053
-    ports:
-      - "50052:50052"
-    networks:
-      - grpc-network
-    restart: unless-stopped
-    depends_on:
-      - grpc-service-a
-
-  grpc-service-c:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.grpc.service_c
-    container_name: grpc-service-c
-    environment:
-      - SERVICE_PORT=50053
-      - SERVICE_D_ADDRESS=grpc-service-d:50054
+      - MERGESORT_PORT=50053
+      - STATISTICS_ADDRESS=grpc-statistics:50055
     ports:
       - "50053:50053"
     networks:
       - grpc-network
     restart: unless-stopped
     depends_on:
-      - grpc-service-b
+      - grpc-mapreduce
 
-  grpc-service-d:
+  grpc-statistics:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.grpc.service_d
-    container_name: grpc-service-d
+      dockerfile: docker/Dockerfile.grpc.statistics
+    container_name: grpc-statistics
     environment:
-      - SERVICE_PORT=50054
-      - SERVICE_E_ADDRESS=grpc-service-e:50055
-    ports:
-      - "50054:50054"
-    networks:
-      - grpc-network
-    restart: unless-stopped
-    depends_on:
-      - grpc-service-c
-
-  grpc-service-e:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.grpc.service_e
-    container_name: grpc-service-e
-    environment:
-      - SERVICE_PORT=50055
+      - STATISTICS_PORT=50055
     ports:
       - "50055:50055"
     networks:
       - grpc-network
     restart: unless-stopped
     depends_on:
-      - grpc-service-d
+      - grpc-mergesort
 
   grpc-client:
     build:
@@ -84,19 +52,18 @@ services:
       dockerfile: docker/Dockerfile.grpc.client
     container_name: grpc-client
     environment:
-      - SERVICE_A_ADDRESS=grpc-service-a:50051
+      - MAPREDUCE_ADDRESS=grpc-mapreduce:50051
       - OUTPUT_FILE=/app/results/grpc_docker_performance_metrics.json
     volumes:
       - ../results:/app/results
     networks:
       - grpc-network
     depends_on:
-      - grpc-service-a
-      - grpc-service-b
-      - grpc-service-c
-      - grpc-service-d
-      - grpc-service-e
+      - grpc-mapreduce
+      - grpc-mergesort
+      - grpc-statistics
 
 networks:
   grpc-network:
     driver: bridge
+
