@@ -16,6 +16,6 @@ if exist "%PROJECT_ROOT%\.venv\Scripts\activate.bat" (
 REM Run client
 echo Initiating workflow: Client - A - B - C - D - E
 echo.
-python "%SCRIPT_DIR%\microservices_client.py"
+python "%SCRIPT_DIR%\client.py"
 
 pause

@@ -16,4 +16,6 @@ if (Test-Path $venvActivate) {
 # Run client
 Write-Host "Initiating workflow: Client → A → B → C → D → E" -ForegroundColor Yellow
 Write-Host ""
-python "$scriptDir\microservices_client.py"
+# Run the microservices client
+Write-Host "Running microservices client..." -ForegroundColor Green
+python "$scriptDir\client.py"

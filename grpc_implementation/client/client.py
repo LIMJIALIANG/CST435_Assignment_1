@@ -200,7 +200,7 @@ def main():
     if success:
         # Save metrics
         results_dir = os.path.join(project_root, 'results')
-        output_file = os.getenv('OUTPUT_FILE', 'microservices_performance_metrics.json')
+        output_file = os.getenv('OUTPUT_FILE', 'grpc_performance_metrics.json')
         output_path = os.path.join(results_dir, output_file)
         client.save_metrics(output_path)
 

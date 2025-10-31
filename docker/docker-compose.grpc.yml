@@ -1,102 +1,102 @@
 version: '3.8'
 
 services:
-  service-a:
+  grpc-service-a:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.service_a
+      dockerfile: docker/Dockerfile.grpc.service_a
     container_name: grpc-service-a
     environment:
       - SERVICE_PORT=50051
-      - SERVICE_B_ADDRESS=service-b:50052
+      - SERVICE_B_ADDRESS=grpc-service-b:50052
     ports:
       - "50051:50051"
     networks:
-      - microservices-network
+      - grpc-network
     restart: unless-stopped
 
-  service-b:
+  grpc-service-b:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.service_b
+      dockerfile: docker/Dockerfile.grpc.service_b
     container_name: grpc-service-b
     environment:
       - SERVICE_PORT=50052
-      - SERVICE_C_ADDRESS=service-c:50053
+      - SERVICE_C_ADDRESS=grpc-service-c:50053
     ports:
       - "50052:50052"
     networks:
-      - microservices-network
+      - grpc-network
     restart: unless-stopped
     depends_on:
-      - service-a
+      - grpc-service-a
 
-  service-c:
+  grpc-service-c:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.service_c
+      dockerfile: docker/Dockerfile.grpc.service_c
     container_name: grpc-service-c
     environment:
       - SERVICE_PORT=50053
-      - SERVICE_D_ADDRESS=service-d:50054
+      - SERVICE_D_ADDRESS=grpc-service-d:50054
     ports:
       - "50053:50053"
     networks:
-      - microservices-network
+      - grpc-network
     restart: unless-stopped
     depends_on:
-      - service-b
+      - grpc-service-b
 
-  service-d:
+  grpc-service-d:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.service_d
+      dockerfile: docker/Dockerfile.grpc.service_d
     container_name: grpc-service-d
     environment:
       - SERVICE_PORT=50054
-      - SERVICE_E_ADDRESS=service-e:50055
+      - SERVICE_E_ADDRESS=grpc-service-e:50055
     ports:
       - "50054:50054"
     networks:
-      - microservices-network
+      - grpc-network
     restart: unless-stopped
     depends_on:
-      - service-c
+      - grpc-service-c
 
-  service-e:
+  grpc-service-e:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.service_e
+      dockerfile: docker/Dockerfile.grpc.service_e
     container_name: grpc-service-e
     environment:
       - SERVICE_PORT=50055
     ports:
       - "50055:50055"
     networks:
-      - microservices-network
+      - grpc-network
     restart: unless-stopped
     depends_on:
-      - service-d
+      - grpc-service-d
 
-  client:
+  grpc-client:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.microservices_client
-    container_name: grpc-microservices-client
+      dockerfile: docker/Dockerfile.grpc.client
+    container_name: grpc-client
     environment:
-      - SERVICE_A_ADDRESS=service-a:50051
-      - OUTPUT_FILE=/app/results/microservices_docker_performance_metrics.json
+      - SERVICE_A_ADDRESS=grpc-service-a:50051
+      - OUTPUT_FILE=/app/results/grpc_docker_performance_metrics.json
     volumes:
       - ../results:/app/results
     networks:
-      - microservices-network
+      - grpc-network
     depends_on:
-      - service-a
-      - service-b
-      - service-c
-      - service-d
-      - service-e
+      - grpc-service-a
+      - grpc-service-b
+      - grpc-service-c
+      - grpc-service-d
+      - grpc-service-e
 
 networks:
-  microservices-network:
+  grpc-network:
     driver: bridge

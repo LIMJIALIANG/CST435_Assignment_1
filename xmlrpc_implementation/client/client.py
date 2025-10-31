@@ -1,446 +1,245 @@
 """
-XML-RPC Client Implementation
-Triggers student analysis services and measures performance
+XML-RPC Client for Chained Microservices Architecture
+Calls only Service A, which triggers the entire chain
 """
-
-import sys
-import os
-import xmlrpc.client
-import csv
+from xmlrpc.client import ServerProxy
 import json
+import os
+import sys
 import time
 from datetime import datetime
 
+# Add parent directory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-class StudentAnalysisClient:
-    """
-    XML-RPC Client for Student Analysis
-    """
+
+class ChainedXMLRPCClient:
+    """Client for chained XML-RPC microservices"""
     
-    def __init__(self, server_address='http://localhost:8000'):
-        """Initialize client with server address"""
-        self.server_address = server_address
-        self.proxy = None
-        self.performance_metrics = []
+    def __init__(self, service_a_url):
+        """
+        Initialize client
+        Args:
+            service_a_url: URL of Service A (entry point)
+        """
+        self.service_a_url = service_a_url
+        self.service_a = None
+        print(f"[Client] Initialized with Service A URL: {service_a_url}")
     
     def connect(self):
-        """Establish connection to server"""
-        print(f"[Client] Connecting to XML-RPC server at {self.server_address}...")
-        self.proxy = xmlrpc.client.ServerProxy(self.server_address, allow_none=True)
-        
-        # Test connection
+        """Connect to Service A"""
         try:
-            methods = self.proxy.system.listMethods()
-            print(f"[Client] Connected successfully!")
-            print(f"[Client] Available methods: {len(methods)}")
-            print(f"[Client] Connection established\n")
+            self.service_a = ServerProxy(self.service_a_url, allow_none=True)
+            # Test connection
+            self.service_a.system.listMethods()
+            print(f"[Client] Connected to Service A at {self.service_a_url}")
         except Exception as e:
-            print(f"[Client] Connection failed: {str(e)}")
+            print(f"[Client] Failed to connect to Service A: {str(e)}")
             raise
     
     def disconnect(self):
-        """Close connection to server"""
-        print("[Client] Disconnected from server")
+        """Disconnect from server"""
+        if self.service_a:
+            self.service_a = None
+            print("[Client] Disconnected from Service A")
     
     def load_students_from_csv(self, csv_path):
-        """Load student data from CSV file"""
-        students = []
-        
+        """
+        Load students from CSV file
+        Args:
+            csv_path: Path to CSV file
+        Returns:
+            List of student dictionaries
+        """
         try:
-            with open(csv_path, 'r', encoding='utf-8') as file:
-                reader = csv.DictReader(file)
-                for row in reader:
-                    student = {
-                        'student_id': row['student_id'],
-                        'name': row['name'],
-                        'faculty': row['faculty'],
-                        'cgpa': float(row['cgpa']),
-                        'grade': row['grade']
-                    }
-                    students.append(student)
+            print(f"[Client] Loading students from {csv_path}")
+            students = []
             
-            print(f"[Client] Loaded {len(students)} students from {csv_path}\n")
+            with open(csv_path, 'r') as file:
+                lines = file.readlines()
+                
+                # Skip header (student_id,name,faculty,cgpa,grade)
+                for line in lines[1:]:
+                    parts = line.strip().split(',')
+                    if len(parts) >= 5:
+                        student = {
+                            'student_id': parts[0].strip(),
+                            'name': parts[1].strip(),
+                            'faculty': parts[2].strip(),
+                            'cgpa': float(parts[3].strip()),
+                            'grade': parts[4].strip()
+                        }
+                        students.append(student)
+            
+            print(f"[Client] Loaded {len(students)} students")
             return students
             
         except Exception as e:
             print(f"[Client] Error loading CSV: {str(e)}")
-            return []
+            raise
     
-    def call_mapreduce(self, students, operation):
-        """Call MapReduce service"""
-        print(f"{'='*60}")
-        print(f"Calling MapReduce Service: {operation}")
-        print(f"{'='*60}")
+    def start_workflow(self, students):
+        """
+        Start the microservices workflow by calling Service A
+        Service A will automatically chain to B → C → D → E
         
-        start_time = time.time()
-        
+        Args:
+            students: List of student dictionaries
+        Returns:
+            Dictionary containing all service results
+        """
         try:
-            response = self.proxy.perform_mapreduce(students, operation)
+            print("\n[Client] Starting chained workflow...")
+            print("[Client] Calling Service A...")
             
-            end_time = time.time()
-            total_time = end_time - start_time
+            # Call Service A with empty accumulated_results
+            # Service A will chain through all services
+            accumulated_results = {}
             
-            if response['success']:
-                print(f"\n[Client] Results received:")
-                
-                if operation == "cgpa_count":
-                    print("\nCGPA Range Distribution:")
-                    for range_key, count in sorted(response['result'].items()):
-                        print(f"  {range_key}: {count} students")
-                elif operation == "grade_count":
-                    print("\nGrade Distribution:")
-                    for grade, count in sorted(response['result'].items()):
-                        print(f"  Grade {grade}: {count} students")
-                
-                # Calculate network overhead
-                server_time = response['processing_time']
-                network_overhead = total_time - server_time
-                
-                print(f"\n[Client] Performance Metrics:")
-                print(f"  Server Processing Time: {server_time:.6f} seconds")
-                print(f"  Total Time (with network): {total_time:.6f} seconds")
-                print(f"  Network Overhead: {network_overhead:.6f} seconds")
-                print(f"{'='*60}\n")
-                
-                # Store metrics
-                self.performance_metrics.append({
-                    'service': 'MapReduce',
-                    'operation': operation,
-                    'server_time': server_time,
-                    'total_time': total_time,
-                    'network_overhead': network_overhead
-                })
-            else:
-                print(f"[Client] Error: {response['error']}")
+            workflow_start = time.time()
+            final_results = self.service_a.process(students, accumulated_results)
+            workflow_end = time.time()
             
-        except Exception as e:
-            print(f"[Client] Error calling MapReduce: {str(e)}")
-    
-    def call_mergesort(self, students, sort_by):
-        """Call MergeSort service"""
-        print(f"{'='*60}")
-        print(f"Calling MergeSort Service: sort by {sort_by}")
-        print(f"{'='*60}")
-        
-        start_time = time.time()
-        
-        try:
-            response = self.proxy.perform_mergesort(students, sort_by)
+            workflow_time = workflow_end - workflow_start
             
-            end_time = time.time()
-            total_time = end_time - start_time
+            print(f"\n[Client] Workflow completed in {workflow_time:.4f}s")
             
-            if response['success']:
-                sorted_students = response['sorted_students']
-                
-                print(f"\n[Client] Received {len(sorted_students)} sorted students")
-                print(f"\nTop 5 students (sorted by {sort_by}):")
-                
-                for i, student in enumerate(sorted_students[:5], 1):
-                    print(f"  {i}. {student['name']:<30} "
-                          f"CGPA: {student['cgpa']:.2f}  "
-                          f"Grade: {student['grade']}")
-                
-                # Calculate network overhead
-                server_time = response['processing_time']
-                network_overhead = total_time - server_time
-                
-                print(f"\n[Client] Performance Metrics:")
-                print(f"  Server Processing Time: {server_time:.6f} seconds")
-                print(f"  Total Time (with network): {total_time:.6f} seconds")
-                print(f"  Network Overhead: {network_overhead:.6f} seconds")
-                print(f"{'='*60}\n")
-                
-                # Store metrics
-                self.performance_metrics.append({
-                    'service': 'MergeSort',
-                    'operation': sort_by,
-                    'server_time': server_time,
-                    'total_time': total_time,
-                    'network_overhead': network_overhead
-                })
-            else:
-                print(f"[Client] Error: {response['error']}")
-            
-        except Exception as e:
-            print(f"[Client] Error calling MergeSort: {str(e)}")
-    
-    def call_statistical_analysis(self, students):
-        """Call Statistical Analysis service"""
-        print(f"{'='*60}")
-        print(f"Calling Statistical Analysis Service")
-        print(f"{'='*60}")
-        
-        start_time = time.time()
-        
-        try:
-            response = self.proxy.perform_statistical_analysis(students)
-            
-            end_time = time.time()
-            total_time = end_time - start_time
-            
-            if response['success']:
-                stats = response['statistics']
-                
-                print(f"\n[Client] Statistical Analysis Results:")
-                print(f"\n  CGPA Statistics:")
-                print(f"    Mean:     {stats['cgpa']['mean']:.4f}")
-                print(f"    Median:   {stats['cgpa']['median']:.4f}")
-                print(f"    Std Dev:  {stats['cgpa']['std_dev']:.4f}")
-                print(f"    Min:      {stats['cgpa']['min']:.4f}")
-                print(f"    Max:      {stats['cgpa']['max']:.4f}")
-                
-                print(f"\n  Student Distribution:")
-                print(f"    Total Students: {stats['distribution']['total_students']}")
-                print(f"    Total Faculties: {stats['distribution']['total_faculties']}")
-                
-                print(f"\n  Faculty Distribution:")
-                for faculty, count in sorted(stats['distribution']['by_faculty'].items()):
-                    print(f"    {faculty}: {count} students")
-                
-                # Calculate network overhead
-                server_time = response['processing_time']
-                network_overhead = total_time - server_time
-                
-                print(f"\n[Client] Performance Metrics:")
-                print(f"  Server Processing Time: {server_time:.6f} seconds")
-                print(f"  Total Time (with network): {total_time:.6f} seconds")
-                print(f"  Network Overhead: {network_overhead:.6f} seconds")
-                print(f"{'='*60}\n")
-                
-                # Store metrics
-                self.performance_metrics.append({
-                    'service': 'StatisticalAnalysis',
-                    'operation': 'calculate_stats',
-                    'server_time': server_time,
-                    'total_time': total_time,
-                    'network_overhead': network_overhead
-                })
-            else:
-                print(f"[Client] Error: {response['error']}")
-            
-        except Exception as e:
-            print(f"[Client] Error calling Statistical Analysis: {str(e)}")
-    
-    def call_filter(self, students, filter_type, value):
-        """Call Filter service"""
-        print(f"{'='*60}")
-        print(f"Calling Filter Service: {filter_type} = {value}")
-        print(f"{'='*60}")
-        
-        start_time = time.time()
-        
-        try:
-            response = self.proxy.perform_filter(students, filter_type, value)
-            
-            end_time = time.time()
-            total_time = end_time - start_time
-            
-            if response['success']:
-                filtered_students = response['filtered_students']
-                
-                print(f"\n[Client] Found {len(filtered_students)} students matching criteria")
-                
-                if len(filtered_students) <= 10:
-                    print(f"\nFiltered Results:")
-                    for student in filtered_students:
-                        print(f"  {student['name']:<30} "
-                              f"Faculty: {student['faculty']:<15} "
-                              f"CGPA: {student['cgpa']:.2f}  "
-                              f"Grade: {student['grade']}")
-                else:
-                    print(f"\nShowing first 10 results:")
-                    for student in filtered_students[:10]:
-                        print(f"  {student['name']:<30} "
-                              f"Faculty: {student['faculty']:<15} "
-                              f"CGPA: {student['cgpa']:.2f}  "
-                              f"Grade: {student['grade']}")
-                
-                # Calculate network overhead
-                server_time = response['processing_time']
-                network_overhead = total_time - server_time
-                
-                print(f"\n[Client] Performance Metrics:")
-                print(f"  Server Processing Time: {server_time:.6f} seconds")
-                print(f"  Total Time (with network): {total_time:.6f} seconds")
-                print(f"  Network Overhead: {network_overhead:.6f} seconds")
-                print(f"{'='*60}\n")
-                
-                # Store metrics
-                self.performance_metrics.append({
-                    'service': 'Filter',
-                    'operation': f'{filter_type}={value}',
-                    'server_time': server_time,
-                    'total_time': total_time,
-                    'network_overhead': network_overhead
-                })
-            else:
-                print(f"[Client] Error: {response['error']}")
-            
-        except Exception as e:
-            print(f"[Client] Error calling Filter: {str(e)}")
-    
-    def call_search(self, students, search_term):
-        """Call Search service"""
-        print(f"{'='*60}")
-        print(f"Calling Search Service: {search_term}")
-        print(f"{'='*60}")
-        
-        start_time = time.time()
-        
-        try:
-            response = self.proxy.search_student(students, search_term)
-            
-            end_time = time.time()
-            total_time = end_time - start_time
-            
-            if response['success']:
-                found_students = response['found_students']
-                
-                print(f"\n[Client] Found {len(found_students)} students matching '{search_term}'")
-                
-                if found_students:
-                    print(f"\nSearch Results:")
-                    for student in found_students:
-                        print(f"  ID: {student['student_id']:<15} "
-                              f"Name: {student['name']:<30} "
-                              f"CGPA: {student['cgpa']:.2f}")
-                
-                # Calculate network overhead
-                server_time = response['processing_time']
-                network_overhead = total_time - server_time
-                
-                print(f"\n[Client] Performance Metrics:")
-                print(f"  Server Processing Time: {server_time:.6f} seconds")
-                print(f"  Total Time (with network): {total_time:.6f} seconds")
-                print(f"  Network Overhead: {network_overhead:.6f} seconds")
-                print(f"{'='*60}\n")
-                
-                # Store metrics
-                self.performance_metrics.append({
-                    'service': 'Search',
-                    'operation': search_term,
-                    'server_time': server_time,
-                    'total_time': total_time,
-                    'network_overhead': network_overhead
-                })
-            else:
-                print(f"[Client] Error: {response['error']}")
-            
-        except Exception as e:
-            print(f"[Client] Error calling Search: {str(e)}")
-    
-    def save_performance_metrics(self, output_path):
-        """Save performance metrics to JSON file"""
-        try:
-            # Calculate summary statistics
-            avg_server_time = sum(m['server_time'] for m in self.performance_metrics) / len(self.performance_metrics)
-            avg_total_time = sum(m['total_time'] for m in self.performance_metrics) / len(self.performance_metrics)
-            avg_network_overhead = sum(m['network_overhead'] for m in self.performance_metrics) / len(self.performance_metrics)
-            
-            output = {
-                'timestamp': datetime.now().isoformat(),
-                'protocol': 'XML-RPC',
-                'server_address': self.server_address,
-                'summary': {
-                    'total_requests': len(self.performance_metrics),
-                    'avg_server_time': avg_server_time,
-                    'avg_total_time': avg_total_time,
-                    'avg_network_overhead': avg_network_overhead
-                },
-                'detailed_metrics': self.performance_metrics
+            return {
+                'results': final_results,
+                'workflow_time': workflow_time
             }
             
-            with open(output_path, 'w') as f:
-                json.dump(output, f, indent=2)
-            
-            print(f"[Client] Performance metrics saved to {output_path}")
-            
         except Exception as e:
-            print(f"[Client] Error saving metrics: {str(e)}")
+            print(f"[Client] Error in workflow: {str(e)}")
+            raise
 
 
 def main():
-    """Main client execution"""
-    # Get configuration from environment or use defaults
-    server_address = os.environ.get('SERVER_ADDRESS', 'http://localhost:8000')
-    output_filename = os.environ.get('OUTPUT_FILE', 'xmlrpc_performance_metrics.json')
-    wait_time = int(os.environ.get('WAIT_TIME', '0'))
+    """Main execution"""
+    # Configuration
+    service_a_url = os.getenv('SERVICE_A_URL', 'http://localhost:8001')
+    csv_path = os.getenv('CSV_PATH', '../data/students.csv')
+    output_file = os.getenv('OUTPUT_FILE', '../results/xmlrpc_performance_metrics.json')
     
-    # Wait if specified (for Docker deployments)
-    if wait_time > 0:
-        print(f"[Client] Waiting {wait_time} seconds for server to be ready...")
-        time.sleep(wait_time)
+    print("\n" + "="*70)
+    print("XML-RPC CHAINED MICROSERVICES CLIENT")
+    print("="*70)
+    print(f"Service A URL: {service_a_url}")
+    print(f"CSV Path: {csv_path}")
+    print(f"Output File: {output_file}")
+    print("="*70 + "\n")
     
-    # Determine paths
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    xmlrpc_impl_dir = os.path.dirname(current_dir)
-    project_root = os.path.dirname(xmlrpc_impl_dir)
-    
-    csv_path = os.path.join(project_root, 'data', 'students.csv')
-    results_dir = os.path.join(project_root, 'results')
-    os.makedirs(results_dir, exist_ok=True)
-    
-    # Use environment variable for output path if it's an absolute path
-    if os.path.isabs(output_filename):
-        output_path = output_filename
-    else:
-        output_path = os.path.join(results_dir, output_filename)
+    # Create output directory if it doesn't exist
+    output_dir = os.path.dirname(output_file)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir)
     
     # Create client
-    client = StudentAnalysisClient(server_address)
+    client = ChainedXMLRPCClient(service_a_url)
     
     try:
-        # Connect to server
+        # Connect
         client.connect()
         
-        # Load student data
+        # Load students
         students = client.load_students_from_csv(csv_path)
         
         if not students:
             print("[Client] No student data loaded. Exiting.")
             return
         
-        # Call all services
-        print("\n" + "="*60)
-        print("Starting Student Analysis with XML-RPC")
-        print(f"Server: {server_address}")
-        print("="*60 + "\n")
+        # Display workflow
+        print("\n" + "="*70)
+        print("XML-RPC MICROSERVICES WORKFLOW")
+        print("="*70)
+        print("Architecture: Client → A → B → C → D → E → Client")
+        print("Operations: CGPA Count → Grade Count → Sort CGPA → Sort Grade → Statistics")
+        print("="*70 + "\n")
         
-        # 1. MapReduce - CGPA Count
-        client.call_mapreduce(students, "cgpa_count")
+        # Start workflow (single call to Service A)
+        workflow_result = client.start_workflow(students)
         
-        # 2. MapReduce - Grade Count
-        client.call_mapreduce(students, "grade_count")
+        # Extract results
+        results = workflow_result['results']
+        workflow_time = workflow_result['workflow_time']
         
-        # 3. MergeSort by CGPA
-        client.call_mergesort(students, "cgpa")
+        # Calculate metrics
+        service_a_time = results['service_a']['processing_time']
+        service_b_time = results['service_b']['processing_time']
+        service_c_time = results['service_c']['processing_time']
+        service_d_time = results['service_d']['processing_time']
+        service_e_time = results['service_e']['processing_time']
         
-        # 4. MergeSort by Name
-        client.call_mergesort(students, "name")
+        total_processing_time = (service_a_time + service_b_time + 
+                                service_c_time + service_d_time + service_e_time)
+        network_overhead = workflow_time - total_processing_time
         
-        # 5. Statistical Analysis
-        client.call_statistical_analysis(students)
+        # Display results
+        print("\n" + "="*70)
+        print("SERVICE RESULTS")
+        print("="*70)
+        print(f"\nService A (CGPA Count):")
+        print(f"  Result: {results['service_a']['result']}")
+        print(f"  Time: {service_a_time:.4f}s")
         
-        # Summary
-        print("\n" + "="*60)
-        print("Performance Summary")
-        print("="*60)
+        print(f"\nService B (Grade Count):")
+        print(f"  Result: {results['service_b']['result']}")
+        print(f"  Time: {service_b_time:.4f}s")
         
-        avg_server = sum(m['server_time'] for m in client.performance_metrics) / len(client.performance_metrics)
-        avg_total = sum(m['total_time'] for m in client.performance_metrics) / len(client.performance_metrics)
-        avg_network = sum(m['network_overhead'] for m in client.performance_metrics) / len(client.performance_metrics)
+        print(f"\nService C (Sort CGPA):")
+        print(f"  Sorted: {results['service_c']['result']['sorted_count']} students")
+        print(f"  Time: {service_c_time:.4f}s")
         
-        print(f"\nTotal Service Calls: {len(client.performance_metrics)}")
-        print(f"\nAverage Times:")
-        print(f"  Server Processing: {avg_server:.6f} seconds")
-        print(f"  Total Time:        {avg_total:.6f} seconds")
-        print(f"  Network Overhead:  {avg_network:.6f} seconds")
-        print(f"\nNetwork overhead is {(avg_network/avg_total)*100:.2f}% of total time")
-        print("="*60 + "\n")
+        print(f"\nService D (Sort Grade):")
+        print(f"  Sorted: {results['service_d']['result']['sorted_count']} students")
+        print(f"  Time: {service_d_time:.4f}s")
+        
+        print(f"\nService E (Statistics):")
+        print(f"  Result: {results['service_e']['result']}")
+        print(f"  Time: {service_e_time:.4f}s")
+        
+        # Performance summary
+        print("\n" + "="*70)
+        print("PERFORMANCE SUMMARY")
+        print("="*70)
+        print(f"Service A Time (CGPA):      {service_a_time:.4f}s")
+        print(f"Service B Time (Grade):     {service_b_time:.4f}s")
+        print(f"Service C Time (Sort CGPA): {service_c_time:.4f}s")
+        print(f"Service D Time (Sort Grade):{service_d_time:.4f}s")
+        print(f"Service E Time (Stats):     {service_e_time:.4f}s")
+        print(f"Total Processing:           {total_processing_time:.4f}s")
+        print(f"End-to-End Time:            {workflow_time:.4f}s")
+        print(f"Network Overhead:           {network_overhead:.4f}s")
+        print(f"Overhead %:                 {(network_overhead/workflow_time*100):.2f}%")
+        print("="*70 + "\n")
         
         # Save metrics
-        client.save_performance_metrics(output_path)
+        metrics_output = {
+            'timestamp': datetime.now().isoformat(),
+            'protocol': 'XML-RPC',
+            'architecture': 'microservices_chained',
+            'service_a_url': service_a_url,
+            'workflow_time': workflow_time,
+            'service_a_time': service_a_time,
+            'service_b_time': service_b_time,
+            'service_c_time': service_c_time,
+            'service_d_time': service_d_time,
+            'service_e_time': service_e_time,
+            'total_processing_time': total_processing_time,
+            'network_overhead': network_overhead,
+            'summary': {
+                'total_services': 5,
+                'avg_service_time': total_processing_time / 5,
+                'overhead_percentage': (network_overhead / workflow_time) * 100
+            },
+            'detailed_results': results
+        }
+        
+        output_path = os.path.abspath(output_file)
+        with open(output_path, 'w') as f:
+            json.dump(metrics_output, f, indent=2)
+        
+        print(f"[Client] Performance metrics saved to {output_path}")
         
     except Exception as e:
         print(f"[Client] Error: {str(e)}")

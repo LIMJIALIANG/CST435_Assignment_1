@@ -34,12 +34,30 @@ Client → Service A → Service B → Service C → Service D → Service E →
 - Simulates distributed containers across multiple servers
 - Performance metrics captured for each service and end-to-end workflow
 
-### XML-RPC Implementation (Text Protocol)
-- **Protocol**: XML-RPC
-- **Serialization**: XML (human-readable, verbose)
+### XML-RPC Microservices Architecture (Service Chaining)
+The XML-RPC implementation now uses the **same chained microservices architecture** as gRPC for fair comparison:
+
+```
+Client → Service A → Service B → Service C → Service D → Service E → Client
+         (MapReduce  (MapReduce  (MergeSort  (MergeSort  (Statistics)
+          CGPA)       Grade)      CGPA)       Grade)      Port 8005
+         Port 8001)  Port 8002)  Port 8003)  Port 8004)
+```
+
+**Service Chain Details:**
+- **Service A** (Port 8001): MapReduce CGPA counting → forwards to Service B
+- **Service B** (Port 8002): MapReduce Grade distribution → forwards to Service C
+- **Service C** (Port 8003): MergeSort by CGPA → forwards to Service D
+- **Service D** (Port 8004): MergeSort by Grade → forwards to Service E
+- **Service E** (Port 8005): Statistical Analysis → returns aggregated results to client
+
+**Key Features:**
+- **Identical Architecture to gRPC**: Both use chained microservices pattern
+- **Protocol**: XML-RPC over HTTP
+- **Serialization**: XML (text-based, human-readable)
 - **Transport**: HTTP/1.1
-- **Port**: 8000
-- **Use Case**: Legacy systems, simple integrations, protocol comparison
+- **Port Range**: 8001-8005
+- **Use Case**: Protocol performance comparison with identical architecture
 
 ## Project Structure
 ```
@@ -59,17 +77,23 @@ Client → Service A → Service B → Service C → Service D → Service E →
 │   │   └── generated/                     # Generated gRPC code
 │   │
 │   └── client/                  # Microservices Client
-│       ├── microservices_client.py        # Initiates workflow at Service A
+│       ├── client.py                      # Initiates workflow at Service A
 │       ├── run_client.ps1/.bat            # Run client script
 │       └── generated/                     # Generated gRPC code
 │
-├── 🔧 xmlrpc_implementation/    # XML-RPC Protocol Implementation
-│   ├── server/                  # XML-RPC Server
-│   │   └── server.py
-│   ├── client/                  # XML-RPC Client
-│   │   └── client.py
-│   ├── run_server.ps1/.bat     # Convenience scripts
-│   └── run_client.ps1/.bat
+├── 🔧 xmlrpc_implementation/    # XML-RPC Microservices Implementation
+│   ├── server/                  # XML-RPC Microservices (A, B, C, D, E)
+│   │   ├── service_a.py         # Service A (Port 8001)
+│   │   ├── service_b.py         # Service B (Port 8002)
+│   │   ├── service_c.py         # Service C (Port 8003)
+│   │   ├── service_d.py         # Service D (Port 8004)
+│   │   ├── service_e.py         # Service E (Port 8005)
+│   │   ├── start_all_services.ps1  # Launch all 5 services
+│   │   └── start_all_services.bat
+│   └── client/                  # XML-RPC Client
+│       ├── client.py
+│       ├── run_client.ps1       # Run client script
+│       └── run_client.bat
 │
 ├── 📦 services/                 # Shared Service Implementations
 │   ├── mapreduce_service.py    # MapReduce logic (protocol-independent)
@@ -80,15 +104,19 @@ Client → Service A → Service B → Service C → Service D → Service E →
 │   └── students.csv
 │
 ├── 🐳 docker/                   # Docker configurations
-│   ├── Dockerfile.service_a              # Service A container
-│   ├── Dockerfile.service_b              # Service B container
-│   ├── Dockerfile.service_c              # Service C container
-│   ├── Dockerfile.service_d              # Service D container
-│   ├── Dockerfile.service_e              # Service E container
-│   ├── Dockerfile.microservices_client   # Microservices client
-│   ├── docker-compose.microservices.yml  # Docker Compose config
+│   ├── Dockerfile.grpc.service_a              # gRPC Service A container
+│   ├── Dockerfile.grpc.service_b              # gRPC Service B container
+│   ├── Dockerfile.grpc.service_c              # gRPC Service C container
+│   ├── Dockerfile.grpc.service_d              # gRPC Service D container
+│   ├── Dockerfile.grpc.service_e              # gRPC Service E container
+│   ├── Dockerfile.grpc.client   # gRPC client container
+│   ├── docker-compose.grpc.yml  # gRPC Docker Compose
 │   │
-│   ├── Dockerfile.xmlrpc.server          # XML-RPC server container
+│   ├── Dockerfile.xmlrpc.service_a       # XML-RPC Service A container
+│   ├── Dockerfile.xmlrpc.service_b       # XML-RPC Service B container
+│   ├── Dockerfile.xmlrpc.service_c       # XML-RPC Service C container
+│   ├── Dockerfile.xmlrpc.service_d       # XML-RPC Service D container
+│   ├── Dockerfile.xmlrpc.service_e       # XML-RPC Service E container
 │   ├── Dockerfile.xmlrpc.client          # XML-RPC client container
 │   └── docker-compose.xmlrpc.yml         # XML-RPC Docker Compose
 │
@@ -110,7 +138,7 @@ Client → Service A → Service B → Service C → Service D → Service E →
 - **Statistical Analysis**: Grade distribution, pass rates, average CGPA per faculty
 - **Detailed Performance Metrics**: Individual service times, total processing time, network overhead
 - **Two Deployment Methods**: Native Python, Docker Compose
-- **Protocol Comparison**: Compare gRPC microservices vs XML-RPC monolithic
+- **Protocol Comparison**: Compare gRPC vs XML-RPC with identical microservices architecture
 
 ## Installation
 
@@ -182,12 +210,12 @@ This method runs all 5 services in separate Docker containers with bridge networ
 cd docker
 
 # Build and run all microservices + client
-docker-compose -f docker-compose.microservices.yml up --build
+docker-compose -f docker-compose.grpc.yml up --build
 
-# Results saved to: results/microservices_docker_performance_metrics.json
+# Results saved to: results/grpc_docker_performance_metrics.json
 
 # To stop and remove containers:
-docker-compose -f docker-compose.microservices.yml down
+docker-compose -f docker-compose.grpc.yml down
 ```
 
 **Container architecture:**
@@ -198,31 +226,90 @@ docker-compose -f docker-compose.microservices.yml down
 
 ---
 
-## Usage - XML-RPC Implementation
+## Usage - XML-RPC Microservices
 
-The XML-RPC implementation maintains a monolithic server-client architecture for comparison.
+The XML-RPC implementation now uses the **same chained microservices architecture** as gRPC for fair protocol comparison.
 
-#### Method 1: Using Convenience Scripts (EASIEST)
+### Method 1: Native Python (Convenience Scripts) ⭐ EASIEST
+
 ```powershell
-# Terminal 1: Start XML-RPC server
-cd xmlrpc_implementation
-.\run_server.ps1    # or run_server.bat
+# Terminal 1: Start all 5 XML-RPC microservices
+cd xmlrpc_implementation\server
+.\start_all_services.ps1
+
+# This will open 5 terminal windows:
+# - Service A: localhost:8001 (MapReduce CGPA)
+# - Service B: localhost:8002 (MapReduce Grade)
+# - Service C: localhost:8003 (MergeSort CGPA)
+# - Service D: localhost:8004 (MergeSort Grade)
+# - Service E: localhost:8005 (Statistics)
 
 # Terminal 2: Run XML-RPC client
-cd xmlrpc_implementation
-.\run_client.ps1    # or run_client.bat
+cd xmlrpc_implementation\client
+.\run_client.ps1
+
+# Results saved to: results/xmlrpc_performance_metrics.json
 ```
 
-#### Method 2: Manual Execution
+**What happens:**
+1. Client calls Service A (port 8001) with the initial request
+2. Service A processes MapReduce CGPA → forwards to Service B
+3. Service B processes MapReduce Grade → forwards to Service C
+4. Service C processes MergeSort CGPA → forwards to Service D
+5. Service D processes MergeSort Grade → forwards to Service E
+6. Service E processes Statistics → returns **complete aggregated results**
+7. Client displays results from all 5 services and measures performance
+
+---
+
+### Method 2: Docker Compose (Containerized) 🐳
+
+This method runs all 5 XML-RPC services in separate Docker containers with bridge networking.
+
+```powershell
+cd docker
+
+# Build and run all XML-RPC microservices + client
+docker-compose -f docker-compose.xmlrpc.yml up --build
+
+# Results saved to: results/xmlrpc_docker_performance_metrics.json
+
+# To stop and remove containers:
+docker-compose -f docker-compose.xmlrpc.yml down
+```
+
+**Container architecture:**
+- 5 service containers (xmlrpc-service-a through xmlrpc-service-e)
+- 1 client container
+- Bridge network for inter-service communication
+- Services start in reverse order (E→D→C→B→A) to ensure downstream services are ready
+- Environment variables for service addresses (e.g., SERVICE_B_URL=http://xmlrpc-service-b:8002)
+
+---
+
+### Method 3: Manual Execution
+
 ```powershell
 # Activate virtual environment
 .\.venv\Scripts\Activate.ps1
 
-# Terminal 1: Start XML-RPC server
+# Terminal 1: Start Service E (terminal service first)
 cd xmlrpc_implementation\server
-python server.py
+python service_e.py
 
-# Terminal 2: Run XML-RPC client
+# Terminal 2: Start Service D
+python service_d.py
+
+# Terminal 3: Start Service C
+python service_c.py
+
+# Terminal 4: Start Service B
+python service_b.py
+
+# Terminal 5: Start Service A (entry point)
+python service_a.py
+
+# Terminal 6: Run client
 cd xmlrpc_implementation\client
 python client.py
 ```
@@ -247,12 +334,12 @@ python tools\compare_protocols.py
 - **Reports**: Analysis of latency, throughput, and overhead
 
 **Comparison aspects:**
-- Serialization format (Binary vs XML)
+- Serialization format (Binary Protocol Buffers vs XML)
 - Network overhead
 - Latency per operation
 - End-to-end workflow time
-- Architecture complexity (Microservices with chaining vs Monolithic)
-- Result aggregation in microservices vs single response in monolithic
+- **Fair Architecture**: Both use identical chained microservices (A → B → C → D → E)
+- **Protocol Performance**: Pure comparison of gRPC vs XML-RPC protocols
 
 ---
 
@@ -272,11 +359,17 @@ cd grpc_implementation\client
 ```
 Results: `results/grpc_performance_metrics.json`
 
-**XML-RPC:**
+**XML-RPC Microservices:**
 ```powershell
-# Terminal 1: Start server
-cd xmlrpc_implementation
-.\run_server.ps1
+# Terminal 1: Start all 5 services
+cd xmlrpc_implementation\server
+.\start_all_services.ps1
+
+# Terminal 2: Run client
+cd xmlrpc_implementation\client
+.\run_client.ps1
+```
+Results: `results/xmlrpc_performance_metrics.json`
 
 # Terminal 2: Run client
 cd xmlrpc_implementation
@@ -293,9 +386,9 @@ Results: `results/xmlrpc_performance_metrics.json`
 **gRPC Microservices:**
 ```powershell
 cd docker
-docker-compose -f docker-compose.microservices.yml up --build
+docker-compose -f docker-compose.grpc.yml up --build
 ```
-Results: `results/microservices_docker_performance_metrics.json`
+Results: `results/grpc_docker_performance_metrics.json`
 
 **XML-RPC:**
 ```powershell
@@ -383,23 +476,34 @@ Results are saved in `results/performance_metrics.json`
 }
 ```
 
-**XML-RPC Monolithic Metrics:**
+**XML-RPC Microservices Metrics:**
 ```json
 {
   "timestamp": "2025-10-30T...",
   "protocol": "XML-RPC",
-  "server_address": "http://localhost:8000",
+  "architecture": "microservices_chained",
+  "service_a_url": "http://localhost:8001",
+  "workflow_time": 0.1234,
+  "service_a_time": 0.0123,
+  "service_b_time": 0.0234,
+  "service_c_time": 0.0345,
+  "service_d_time": 0.0456,
+  "service_e_time": 0.0567,
+  "total_processing_time": 0.1725,
+  "network_overhead": 0.0109,
   "summary": {
-    "total_requests": 5,
-    "avg_server_time": 0.0023,
-    "avg_total_time": 0.0089,
-    "avg_network_overhead": 0.0066
+    "total_services": 5,
+    "avg_service_time": 0.0345,
+    "overhead_percentage": 8.83
   }
 }
 ```
 
 **Comparison Summary:**
-- gRPC microservices show **distributed processing** across 5 services
+- Both use **identical chained microservices architecture** (A → B → C → D → E)
+- gRPC uses binary Protocol Buffers serialization
+- XML-RPC uses text-based XML serialization
+- **Fair protocol comparison** with same architecture and operations
 - Each service's contribution to total time is visible
 - Network overhead in microservices includes inter-service communication
 - XML-RPC monolithic has simpler metrics but less visibility into operations
@@ -414,7 +518,7 @@ Results are saved in `results/performance_metrics.json`
 - `grpc_implementation/server/service_c_mergesort_cgpa.py` - Service C (MergeSort CGPA)
 - `grpc_implementation/server/service_d_mergesort_grade.py` - Service D (MergeSort Grade)
 - `grpc_implementation/server/service_e_statistics.py` - Service E (Statistics)
-- `grpc_implementation/client/microservices_client.py` - Microservices client
+- `grpc_implementation/client/client.py` - Microservices client
 - `generate_proto.py` - Generates gRPC code from .proto files
 
 ### XML-RPC Implementation
@@ -477,20 +581,33 @@ python generate_proto.py
 
 ### XML-RPC Issues
 
-#### Port Already in Use (8000)
+#### Ports Already in Use (8001-8005)
 ```powershell
-# Find process using port 8000
-netstat -ano | findstr :8000
+# Find processes using XML-RPC ports
+netstat -ano | findstr ":8001 :8002 :8003 :8004 :8005"
 
-# Kill process (use PID from above)
+# Kill specific process (use PID from above)
 taskkill /PID <PID> /F
+
+# Or kill all Python processes
+taskkill /F /IM python.exe
+```
+
+#### Services Not Starting in Chain
+```powershell
+# Start services in reverse order (E first, then D, C, B, A)
+# This ensures downstream services are ready when upstream tries to connect
+
+# Check if all 5 services are listening:
+netstat -ano | findstr ":8001 :8002 :8003 :8004 :8005"
+# All should show LISTENING status
 ```
 
 #### Connection Refused
 ```powershell
-# Ensure server is running first
-# Check firewall settings
-# Verify server address (localhost or 0.0.0.0)
+# Ensure all 5 services are running before starting client
+# Use start_all_services.ps1 to launch them properly
+# Wait 2 seconds between each service start
 ```
 
 ### General Issues
@@ -598,7 +715,70 @@ This provides comprehensive data showing:
 - Protocol differences (gRPC vs XML-RPC)
 - Deployment overhead (native vs containers)
 
+---
+
+## Quick Reference - Docker Commands
+
+### gRPC Microservices (Docker)
+```powershell
+# Build and run
+cd docker
+docker-compose -f docker-compose.grpc.yml up --build
+
+# Stop and remove
+docker-compose -f docker-compose.grpc.yml down
+
+# View logs
+docker-compose -f docker-compose.grpc.yml logs -f
+
+# Rebuild specific service
+docker-compose -f docker-compose.grpc.yml build service-a
+```
+
+### XML-RPC Microservices (Docker)
+```powershell
+# Build and run
+cd docker
+docker-compose -f docker-compose.xmlrpc.yml up --build
+
+# Stop and remove
+docker-compose -f docker-compose.xmlrpc.yml down
+
+# View logs (specific service)
+docker logs xmlrpc-service-a -f
+
+# View logs (all services)
+docker-compose -f docker-compose.xmlrpc.yml logs -f
+
+# Restart specific service
+docker restart xmlrpc-service-a
+```
+
+### Docker Troubleshooting
+```powershell
+# Check running containers
+docker ps
+
+# Check all containers (including stopped)
+docker ps -a
+
+# Remove all stopped containers
+docker container prune -f
+
+# Remove all unused images
+docker image prune -a -f
+
+# View resource usage
+docker stats
+
+# Clean everything (containers, networks, images, volumes)
+docker system prune -a --volumes -f
+```
+
+---
+
 ## References
 - [gRPC Documentation](https://grpc.io)
 - [Docker Documentation](https://docs.docker.com/)
 - [Protocol Buffers](https://developers.google.com/protocol-buffers)
+
