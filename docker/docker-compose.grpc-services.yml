@@ -1,3 +1,5 @@
+# This file is for your VM (Machine 1)
+# It ONLY runs the 5 services and exposes them.
 version: '3.8'
 
 services:
@@ -10,6 +12,7 @@ services:
       - SERVICE_PORT=50051
       - SERVICE_B_ADDRESS=grpc-service-b:50052
     ports:
+      # CRITICAL: This exposes Service A to the VM's network
       - "50051:50051"
     networks:
       - grpc-network
@@ -23,8 +26,7 @@ services:
     environment:
       - SERVICE_PORT=50052
       - SERVICE_C_ADDRESS=grpc-service-c:50053
-    ports:
-      - "50052:50052"
+    # No 'ports' needed, this is internal
     networks:
       - grpc-network
     restart: unless-stopped
@@ -39,8 +41,7 @@ services:
     environment:
       - SERVICE_PORT=50053
       - SERVICE_D_ADDRESS=grpc-service-d:50054
-    ports:
-      - "50053:50053"
+    # No 'ports' needed, this is internal
     networks:
       - grpc-network
     restart: unless-stopped
@@ -55,8 +56,7 @@ services:
     environment:
       - SERVICE_PORT=50054
       - SERVICE_E_ADDRESS=grpc-service-e:50055
-    ports:
-      - "50054:50054"
+    # No 'ports' needed, this is internal
     networks:
       - grpc-network
     restart: unless-stopped
@@ -70,32 +70,12 @@ services:
     container_name: grpc-service-e
     environment:
       - SERVICE_PORT=50055
-    ports:
-      - "50055:50055"
+    # No 'ports' needed, this is internal
     networks:
       - grpc-network
     restart: unless-stopped
     depends_on:
       - grpc-service-d
-
-  grpc-client:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.grpc.client
-    container_name: grpc-client
-    environment:
-      - SERVICE_A_ADDRESS=grpc-service-a:50051
-      - OUTPUT_FILE=/app/results/grpc_docker_performance_metrics.json
-    volumes:
-      - ../results:/app/results
-    networks:
-      - grpc-network
-    depends_on:
-      - grpc-service-a
-      - grpc-service-b
-      - grpc-service-c
-      - grpc-service-d
-      - grpc-service-e
 
 networks:
   grpc-network:

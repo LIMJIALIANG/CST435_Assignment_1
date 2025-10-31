@@ -1,25 +1,44 @@
+# ===== STAGE 1: "Builder" =====
+# This stage builds the .py files from the .proto files.
+FROM python:3.11-slim as builder
+
+WORKDIR /app
+
+# Install only the build-time tools (grpc-tools)
+# We assume grpc-tools is in your requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the source proto files and the generator script
+COPY grpc_implementation/proto/ ./grpc_implementation/proto/
+COPY generate_proto.py .
+
+# Run the generator script to create the .py files
+RUN python generate_proto.py
+
+
+# ===== STAGE 2: "Final" =====
+# This is the lean, final image that will run.
 FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install only the *runtime* dependencies (e.g., grpcio)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY services/ ./services/
-COPY data/ ./data/
-COPY grpc_implementation/proto/ ./grpc_implementation/proto/
-COPY generate_proto.py .
+# Copy the *generated .py files* from the "builder" stage
+# This assumes generate_proto.py puts files in this directory:
+COPY --from=builder /app/grpc_implementation/client/generated/ ./grpc_implementation/client/generated/
 
-RUN python generate_proto.py
-
-# Copy client code
+# Copy the client app code and the data it needs
 COPY grpc_implementation/client/client.py ./grpc_implementation/client/
+COPY data/ ./data/
 
-RUN mkdir -p grpc_implementation/client/generated && \
-    cp grpc_implementation/client/generated/*.py grpc_implementation/client/generated/ || true
-
-ENV SERVICE_A_ADDRESS=service-a:50051
-ENV OUTPUT_FILE=/app/results/grpc_docker_performance_metrics.json
+# Set the default environment variables
+ENV SERVICE_A_ADDRESS=docker-grpc-service-a:50051
+ENV OUTPUT_FILE=/app/results/microservices_docker_performance_metrics.json
 
 # Wait for services to be ready, then run client
 CMD sleep 10 && python grpc_implementation/client/client.py
+
