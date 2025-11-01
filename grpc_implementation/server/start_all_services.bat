@@ -13,7 +13,7 @@ if exist "%PROJECT_ROOT%\.venv\Scripts\activate.bat" (
     call "%PROJECT_ROOT%\.venv\Scripts\activate.bat"
 )
 
-# Start each service
+REM Start each service
 echo Starting MapReduce Service (Port 50051) - CGPA + Grade Classification...
 start "MapReduce Service" cmd /k "cd /d %SCRIPT_DIR% && python mapreduce_cgpa.py"
 timeout /t 2 /nobreak >nul

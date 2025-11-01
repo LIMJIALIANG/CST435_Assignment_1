@@ -118,8 +118,15 @@ def main():
     """Main execution"""
     # Configuration
     mapreduce_url = os.getenv('MAPREDUCE_URL', 'http://localhost:8001')
-    csv_path = os.getenv('CSV_PATH', '../data/students.csv')
-    output_file = os.getenv('OUTPUT_FILE', '../results/xmlrpc_performance_metrics.json')
+    
+    # Get absolute path to CSV file
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.dirname(os.path.dirname(script_dir))
+    default_csv = os.path.join(project_root, 'data', 'students.csv')
+    default_output = os.path.join(project_root, 'results', 'xmlrpc_performance_metrics.json')
+    
+    csv_path = os.getenv('CSV_PATH', default_csv)
+    output_file = os.getenv('OUTPUT_FILE', default_output)
     
     print("\n" + "="*70)
     print("MICROSERVICES CLIENT")

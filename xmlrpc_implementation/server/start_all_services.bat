@@ -10,17 +10,17 @@ cd /d "%~dp0"
 
 REM Start Statistics Service first (terminal service)
 echo Starting Statistics Service on port 8005...
-start "Statistics Service" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python statistics.py"
+start "Statistics Service" cmd /k "python statistics.py"
 timeout /t 2 /nobreak > nul
 
 REM Start MergeSort Service
 echo Starting MergeSort Service (Sort CGPA + Grade) on port 8003...
-start "MergeSort Service" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python mergesort.py"
+start "MergeSort Service" cmd /k "python mergesort.py"
 timeout /t 2 /nobreak > nul
 
 REM Start MapReduce Service (entry point)
 echo Starting MapReduce Service (CGPA + Grade Count) on port 8001...
-start "MapReduce Service" cmd /k "call ..\..\..\.venv\Scripts\activate.bat && python mapreduce.py"
+start "MapReduce Service" cmd /k "python mapreduce.py"
 
 echo.
 echo ======================================================================
