@@ -24,16 +24,26 @@ from services.stats_service import StatsService
 class StatisticsServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceServicer):
     """Statistics Service: Performs statistical analysis (FINAL SERVICE)"""
     
+    def __init__(self):
+        print(f"[Statistics Service] Initialized (Terminal Service)", flush=True)
+    
     def ProcessChain(self, request, context):
         """Process statistics and return FINAL combined results"""
-        print(f"\n[Statistics Service] ✓ Chain request received from MergeSort Service")
-        print(f"[Statistics Service] Analyzing {len(request.students)} students")
-        print(f"[Statistics Service] This is the FINAL service in the chain")
+        print(f"[Statistics Service] Received from MergeSort Service", flush=True)
+        print(f"[Statistics Service] Processing {len(request.students)} students...", flush=True)
         
         try:
+            print(f"[Statistics] Comprehensive analysis", flush=True)
             start_time = time.time()
             result = StatsService.perform_analysis(list(request.students), "all")
             processing_time = time.time() - start_time
+            
+            # Calculate mean CGPA
+            mean_cgpa = sum(s.cgpa for s in request.students) / len(request.students) if request.students else 0.0
+            
+            print(f"[Statistics] Analyzed {len(request.students)} students", flush=True)
+            print(f"[Statistics] Mean CGPA: {mean_cgpa:.4f}", flush=True)
+            print(f"[Statistics] Processing time: {processing_time:.4f} seconds", flush=True)
             
             # Get accumulated results from MapReduce, MergeSort Services
             combined = student_service_pb2.CombinedResponse()
@@ -41,6 +51,7 @@ class StatisticsServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceSe
             
             # Add Statistics Service results (FINAL)
             combined.pass_rate = result['pass_rate']
+            combined.mean_cgpa = mean_cgpa
             combined.statistics_time = processing_time
             
             for faculty_stat in result['faculty_stats']:
@@ -62,49 +73,36 @@ class StatisticsServiceHandler(student_service_pb2_grpc.StudentAnalysisServiceSe
                 combined.statistics_time
             )
             
-            print(f"[Statistics Service] ✓ Completed in {processing_time:.4f}s")
-            
-            # Print detailed statistics
-            print(f"[Statistics Service] Pass Rate: {result['pass_rate']:.2f}%")
-            
-            print(f"[Statistics Service] Faculty Distribution:")
-            for faculty_stat in result['faculty_stats']:
-                print(f"[Statistics Service]   {faculty_stat['faculty']}: {faculty_stat['student_count']} students (Avg CGPA: {faculty_stat['average_cgpa']:.2f})")
-            
-            print(f"[Statistics Service] Grade Distribution:")
-            for grade_dist in result['grade_distribution']:
-                print(f"[Statistics Service]   {grade_dist['grade']}: {grade_dist['count']} students ({grade_dist['percentage']:.1f}%)")
-            
-            print(f"[Statistics Service] ✓ All services completed! Chain: MapReduce→MergeSort→Statistics")
-            print(f"[Statistics Service] ✓ Returning FINAL combined results to client\n")
+            print(f"[Statistics Service] Completed in {processing_time:.4f}s", flush=True)
+            print(f"[Statistics Service] Statistics calculated", flush=True)
+            print(f"[Statistics Service] Chain complete: MapReduce, MergeSort, Statistics processed", flush=True)
+            print(f"[Statistics Service] Returning final results to client...", flush=True)
             
             return combined
             
         except Exception as e:
-            print(f"[Statistics Service] ✗ Error: {e}")
+            print(f"[Statistics Service] ✗ Error: {e}", flush=True)
             context.set_code(grpc.StatusCode.INTERNAL)
             return student_service_pb2.CombinedResponse()
 
 
 def serve():
-    port = int(os.getenv('SERVICE_PORT', '50055'))
+    """Start Statistics Service"""
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(StatisticsServiceHandler(), server)
-    server.add_insecure_port(f'[::]:{port}')
+    student_service_pb2_grpc.add_StudentAnalysisServiceServicer_to_server(
+        StatisticsServiceHandler(), server
+    )
+    
+    port = os.getenv('STATISTICS_PORT', '50055')
+    server.add_insecure_port(f'0.0.0.0:{port}')
     server.start()
     
-    print("="*60)
-    print("STATISTICS SERVICE: Statistical Analysis (FINAL)")
-    print("="*60)
-    print(f"Port: {port}")
-    print("Status: RUNNING")
-    print("="*60 + "\n")
+    print("="*70, flush=True)
+    print(f"Statistics Service (Statistical Analysis) started on 0.0.0.0:{port}", flush=True)
+    print("Terminal Service - Returns final results", flush=True)
+    print("="*70, flush=True)
     
-    try:
-        server.wait_for_termination()
-    except KeyboardInterrupt:
-        print("\n[Statistics Service] Shutting down...")
-        server.stop(0)
+    server.wait_for_termination()
 
 
 if __name__ == '__main__':

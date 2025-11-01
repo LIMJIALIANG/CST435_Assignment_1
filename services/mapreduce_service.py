@@ -98,11 +98,6 @@ class MapReduceService:
         
         processing_time = time.time() - start_time
         
-        print(f"[MapReduce] CGPA Classification")
-        print(f"[MapReduce] Processed {len(students)} students")
-        print(f"[MapReduce] Results: {sorted_result}")
-        print(f"[MapReduce] Processing time: {processing_time:.4f} seconds")
-        
         return {
             'cgpa_classification': sorted_result,
             'processing_time': processing_time

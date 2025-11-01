@@ -49,10 +49,16 @@ class MergeSortServiceHandler:
             
             # Perform MergeSort by CGPA
             print(f"[MergeSort Service] Performing MergeSort by CGPA...")
+            print(f"[MergeSort] Sort by CGPA")
             start_time = time.time()
             sort_result = MergeSortService.perform_sort(students)
             sorted_students = sort_result['sorted_students']
             processing_time = time.time() - start_time
+            
+            print(f"[MergeSort] Sorted {len(sorted_students)} students")
+            if sorted_students:
+                print(f"[MergeSort] Top student: {sorted_students[0].name} (CGPA: {sorted_students[0].cgpa:.2f})")
+            print(f"[MergeSort] Processing time: {processing_time:.4f} seconds")
             
             # Convert sorted students to dictionaries (Top 10 for display)
             sorted_data = [
@@ -78,7 +84,9 @@ class MergeSortServiceHandler:
             
             # Forward to next service in chain
             next_service = ServerProxy(self.next_service_url, allow_none=True)
-            return next_service.process(students_data, accumulated_results)
+            final_results = next_service.process(students_data, accumulated_results)
+            
+            return final_results
             
         except Exception as e:
             print(f"[MergeSort Service] Error: {str(e)}")

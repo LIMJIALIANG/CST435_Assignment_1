@@ -47,9 +47,14 @@ class MapReduceServiceHandler:
             students = [StudentObject(**student) for student in students_data]
             
             # Perform MapReduce for CGPA classification
+            print(f"[MapReduce] CGPA Classification")
             start_time = time.time()
             cgpa_result = MapReduceService.perform_mapreduce(students)
             processing_time = time.time() - start_time
+            
+            print(f"[MapReduce] Processed {len(students_data)} students")
+            print(f"[MapReduce] Results: {cgpa_result['cgpa_classification']}")
+            print(f"[MapReduce] Processing time: {processing_time:.4f} seconds")
             
             # Ensure all values are XML-RPC serializable
             cgpa_classification = {}
@@ -67,7 +72,9 @@ class MapReduceServiceHandler:
             
             # Forward to next service in chain
             next_service = ServerProxy(self.next_service_url, allow_none=True)
-            return next_service.process(students_data, accumulated_results)
+            final_results = next_service.process(students_data, accumulated_results)
+            
+            return final_results
             
         except Exception as e:
             print(f"[MapReduce Service] Error: {str(e)}")

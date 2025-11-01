@@ -96,10 +96,6 @@ class StatsService:
         
         processing_time = time.time() - start_time
         
-        print(f"[Statistics] Analysis type: {analysis_type}")
-        print(f"[Statistics] Analyzed {len(students)} students")
-        print(f"[Statistics] Processing time: {processing_time:.4f} seconds")
-        
         result['processing_time'] = processing_time
         return result
     
@@ -146,11 +142,6 @@ class StatsService:
             grade_counts[student.grade] += 1
         
         processing_time = time.time() - start_time
-        
-        print(f"[Statistics] Comprehensive analysis")
-        print(f"[Statistics] Analyzed {len(students)} students")
-        print(f"[Statistics] Mean CGPA: {mean_cgpa:.4f}")
-        print(f"[Statistics] Processing time: {processing_time:.4f} seconds")
         
         return {
             'statistics': {

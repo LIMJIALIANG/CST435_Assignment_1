@@ -59,12 +59,6 @@ class MergeSortService:
         
         processing_time = time.time() - start_time
         
-        print(f"[MergeSort] Sort by CGPA")
-        print(f"[MergeSort] Sorted {len(sorted_students)} students")
-        if sorted_students:
-            print(f"[MergeSort] Top student: {sorted_students[0].name} (CGPA: {sorted_students[0].cgpa})")
-        print(f"[MergeSort] Processing time: {processing_time:.4f} seconds")
-        
         return {
             'sorted_students': sorted_students,
             'processing_time': processing_time

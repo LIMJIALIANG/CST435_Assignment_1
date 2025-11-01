@@ -41,15 +41,19 @@ class StatisticsServiceHandler:
         try:
             print(f"[Statistics Service] Received from MergeSort Service")
             print(f"[Statistics Service] Processing {len(students_data)} students...")
-            start_time = time.time()
             
             # Convert dictionaries to StudentObject instances
             students = [StudentObject(**student) for student in students_data]
             
             # Perform Statistical Analysis
+            print(f"[Statistics] Comprehensive analysis")
+            start_time = time.time()
             result = StatsService.calculate_statistics(students)
-            
             processing_time = time.time() - start_time
+            
+            print(f"[Statistics] Analyzed {len(students_data)} students")
+            print(f"[Statistics] Mean CGPA: {result['statistics']['cgpa']['mean']:.4f}")
+            print(f"[Statistics] Processing time: {processing_time:.4f} seconds")
             
             # Ensure statistics are XML-RPC serializable
             stats = result['statistics']

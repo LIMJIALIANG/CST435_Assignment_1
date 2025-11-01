@@ -85,6 +85,7 @@ message CombinedResponse {
     repeated FacultyStats faculty_stats = 9;
     repeated GradeDistribution grade_distribution = 10;
     double pass_rate = 11;
+    double mean_cgpa = 14;  // Overall mean CGPA across all students
     double statistics_time = 12;
     
     // Total workflow time

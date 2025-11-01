@@ -32,6 +32,10 @@ class MicroservicesClient:
     
     def load_students(self, csv_path):
         """Load student data"""
+        print(f"[Client] Initialized with MapReduce Service URL: {self.mapreduce_address}", flush=True)
+        print(f"[Client] Connected to MapReduce Service at {self.mapreduce_address}", flush=True)
+        print(f"[Client] Loading students from {csv_path}", flush=True)
+        
         students = []
         try:
             with open(csv_path, 'r', encoding='utf-8') as file:
@@ -47,22 +51,26 @@ class MicroservicesClient:
                     students.append(student)
             
             self.students = students
-            print(f"[Client] ✓ Loaded {len(students)} students\n")
+            print(f"[Client] Loaded {len(students)} students", flush=True)
+            print(f"[Client] ✓ Loaded {len(students)} students\n", flush=True)
             return students
         except Exception as e:
-            print(f"[Client] ✗ Error loading CSV: {e}")
+            print(f"[Client] ✗ Error loading CSV: {e}", flush=True)
             return []
     
     def initiate_workflow(self):
         """Initiate the microservices workflow"""
-        print("="*70)
-        print("MICROSERVICES WORKFLOW")
-        print("="*70)
-        print("Chain: Client → MapReduce → MergeSort → Statistics → Client")
-        print("="*70 + "\n")
-        
-        print(f"[Client] Starting workflow...")
-        print(f"[Client] Sending request to MapReduce Service ({self.mapreduce_address})\n")
+        print("="*70, flush=True)
+        print("MICROSERVICES WORKFLOW", flush=True)
+        print("="*70, flush=True)
+        print("Chain: Client → MapReduce → MergeSort → Statistics → Client", flush=True)
+        print("="*70, flush=True)
+        print(flush=True)
+        print(f"[Client] Starting workflow...", flush=True)
+        print(f"[Client] Sending request to MapReduce Service ({self.mapreduce_address})", flush=True)
+        print(flush=True)
+        print(f"[Client] Starting chained workflow...", flush=True)
+        print(f"[Client] Calling MapReduce Service...", flush=True)
         
         try:
             # Connect to MapReduce Service (entry point)
@@ -83,46 +91,57 @@ class MicroservicesClient:
             
             channel.close()
             
+            print(flush=True)
+            print(f"[Client] Workflow completed in {total_workflow_time:.4f}s", flush=True)
+            print(flush=True)
+            
             # Display ALL results from ALL services
-            print("="*70)
-            print("WORKFLOW COMPLETED - ALL RESULTS")
-            print("="*70)
+            print("="*70, flush=True)
+            print("WORKFLOW COMPLETED - ALL RESULTS", flush=True)
+            print("="*70, flush=True)
+            print(flush=True)
             
             # MapReduce Service Results
-            print(f"\n[MapReduce Service] CGPA Classification (Time: {combined_response.mapreduce_time:.4f}s)")
-            print("-" * 70)
-            print(f"  CGPA Classification:")
+            print(f"[MapReduce Service] CGPA Classification (Time: {combined_response.mapreduce_time:.4f}s)", flush=True)
+            print("-" * 70, flush=True)
+            print(f"  CGPA Classification:", flush=True)
             for cgpa_range in combined_response.cgpa_ranges:
-                print(f"    {cgpa_range.range}: {cgpa_range.count} students")
+                print(f"    {cgpa_range.range}: {cgpa_range.count} students", flush=True)
+            print(flush=True)
             
             # MergeSort Service Results
-            print(f"\n[MergeSort Service] Sort by CGPA (Time: {combined_response.mergesort_time:.4f}s)")
-            print("-" * 70)
-            print(f"  Top 10 students by CGPA:")
+            print(f"[MergeSort Service] Sort by CGPA (Time: {combined_response.mergesort_time:.4f}s)", flush=True)
+            print("-" * 70, flush=True)
+            print(f"  Top 10 students by CGPA:", flush=True)
             for i, student in enumerate(combined_response.sorted_by_cgpa[:10], 1):
-                print(f"    {i}. {student.name} - CGPA: {student.cgpa:.2f} ({student.grade})")
+                print(f"    {i}. {student.name} - CGPA: {student.cgpa:.2f} ({student.grade})", flush=True)
+            print(flush=True)
             
             # Statistics Service Results
-            print(f"\n[Statistics Service] Statistical Analysis (Time: {combined_response.statistics_time:.4f}s)")
-            print("-" * 70)
-            print(f"  Pass Rate: {combined_response.pass_rate:.2f}%")
-            print(f"\n  Faculty Statistics:")
+            print(f"[Statistics Service] Statistical Analysis (Time: {combined_response.statistics_time:.4f}s)", flush=True)
+            print("-" * 70, flush=True)
+            print(f"  Mean CGPA: {combined_response.mean_cgpa:.4f}", flush=True)
+            print(f"  Pass Rate: {combined_response.pass_rate:.2f}%", flush=True)
+            print(flush=True)
+            print(f"  Faculty Statistics:", flush=True)
             for faculty_stat in combined_response.faculty_stats:
-                print(f"    {faculty_stat.faculty}: Avg CGPA {faculty_stat.average_cgpa:.2f} ({faculty_stat.student_count} students)")
-            print(f"\n  Grade Distribution:")
+                print(f"    {faculty_stat.faculty}: Avg CGPA {faculty_stat.average_cgpa:.2f} ({faculty_stat.student_count} students)", flush=True)
+            print(flush=True)
+            print(f"  Grade Distribution:", flush=True)
             for grade_dist in combined_response.grade_distribution:
-                print(f"    Grade {grade_dist.grade}: {grade_dist.count} students ({grade_dist.percentage:.1f}%)")
+                print(f"    Grade {grade_dist.grade}: {grade_dist.count} students ({grade_dist.percentage:.1f}%)", flush=True)
             
             # Performance Summary
-            print(f"\n{'='*70}")
-            print("PERFORMANCE SUMMARY")
-            print("="*70)
-            print(f"MapReduce Time:        {combined_response.mapreduce_time:.4f}s")
-            print(f"MergeSort Time:        {combined_response.mergesort_time:.4f}s")
-            print(f"Statistics Time:       {combined_response.statistics_time:.4f}s")
-            print(f"Total Processing:      {combined_response.total_workflow_time:.4f}s")
-            print(f"End-to-End Time:       {total_workflow_time:.4f}s")
-            print(f"Network Overhead:      {(total_workflow_time - combined_response.total_workflow_time):.4f}s")
+            print(f"\n{'='*70}", flush=True)
+            print("PERFORMANCE SUMMARY", flush=True)
+            print("="*70, flush=True)
+            print(f"MapReduce Time:        {combined_response.mapreduce_time:.4f}s", flush=True)
+            print(f"MergeSort Time:        {combined_response.mergesort_time:.4f}s", flush=True)
+            print(f"Statistics Time:       {combined_response.statistics_time:.4f}s", flush=True)
+            print(f"Total Processing:      {combined_response.total_workflow_time:.4f}s", flush=True)
+            print(f"End-to-End Time:       {total_workflow_time:.4f}s", flush=True)
+            print(f"Network Overhead:      {(total_workflow_time - combined_response.total_workflow_time):.4f}s", flush=True)
+            print(flush=True)
             
             # Store detailed metrics (matching XML-RPC format)
             network_overhead = total_workflow_time - combined_response.total_workflow_time
@@ -189,6 +208,7 @@ class MicroservicesClient:
             self.metrics['detailed_results']['statistics'] = {
                 'operation': 'statistical_analysis',
                 'result': {
+                    'mean_cgpa': combined_response.mean_cgpa,
                     'pass_rate': combined_response.pass_rate,
                     'faculty_statistics': faculty_stats,
                     'grade_distribution': grade_distribution
@@ -196,14 +216,15 @@ class MicroservicesClient:
                 'processing_time': combined_response.statistics_time
             }
             
-            print(f"\n{'='*70}")
-            print("✓ All services (MapReduce→MergeSort→Statistics) completed successfully!")
-            print("="*70 + "\n")
+            print("="*70, flush=True)
+            print("✓ All services (MapReduce→MergeSort→Statistics) completed successfully!", flush=True)
+            print("="*70, flush=True)
+            print(flush=True)
             
             return True
             
         except Exception as e:
-            print(f"[Client] ✗ Error: {e}")
+            print(f"[Client] ✗ Error: {e}", flush=True)
             import traceback
             traceback.print_exc()
             return False
@@ -214,18 +235,20 @@ class MicroservicesClient:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(self.metrics, f, indent=2)
-            print(f"[Client] ✓ Metrics saved to: {output_path}\n")
+            print(f"[Client] Performance metrics saved to {output_path}", flush=True)
         except Exception as e:
-            print(f"[Client] ✗ Error saving metrics: {e}")
+            print(f"[Client] ✗ Error saving metrics: {e}", flush=True)
 
 
 def main():
     """Main execution"""
-    print("\n" + "="*70)
-    print("MICROSERVICES CLIENT")
-    print("="*70)
-    print("Architecture: 3 Connected Services (MapReduce→MergeSort→Statistics)")
-    print("="*70 + "\n")
+    print(flush=True)
+    print("="*70, flush=True)
+    print("MICROSERVICES CLIENT", flush=True)
+    print("="*70, flush=True)
+    print("Architecture: 3 Connected Services (MapReduce→MergeSort→Statistics)", flush=True)
+    print("="*70, flush=True)
+    print(flush=True)
     
     # Initialize client
     client = MicroservicesClient()
@@ -239,7 +262,7 @@ def main():
     client.load_students(csv_path)
     
     if not client.students:
-        print("[Client] ✗ No students loaded. Exiting.")
+        print("[Client] ✗ No students loaded. Exiting.", flush=True)
         return
     
     # Run workflow

@@ -203,6 +203,9 @@ def main():
             cgpa_stats = stats['cgpa']
             distribution = stats['distribution']
             
+            # Display mean CGPA
+            print(f"  Mean CGPA: {cgpa_stats['mean']:.4f}")
+            
             # Calculate pass rate (CGPA >= 2.0)
             pass_rate = sum(1 for s in students if s['cgpa'] >= 2.0) / len(students) * 100 if students else 0.0
             print(f"  Pass Rate: {pass_rate:.2f}%")
