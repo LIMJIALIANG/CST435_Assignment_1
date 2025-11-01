@@ -36,7 +36,10 @@ COPY grpc_implementation/client/client.py ./grpc_implementation/client/
 COPY data/ ./data/
 
 # Set the default environment variables
-ENV SERVICE_A_ADDRESS=docker-grpc-service-a:50051
+# Test it locally
+# ENV SERVICE_A_ADDRESS=docker-grpc-service-a:50051
+# Test it in different machine, us ip a to find the dynamic IP address
+ENV SERVICE_A_ADDRESS=192.168.0.161:50051
 ENV OUTPUT_FILE=/app/results/microservices_docker_performance_metrics.json
 
 # Wait for services to be ready, then run client
